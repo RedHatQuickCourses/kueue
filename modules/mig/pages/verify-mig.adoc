@@ -1,0 +1,54 @@
+= Verify MIG Resources
+:navtitle: Verify MIG
+
+After updating the topology ConfigMap and restarting the device-plugin, the node should advertise both whole GPU and MIG resource types.
+
+== References
+
+* https://docs.nvidia.com/datacenter/tesla/mig-user-guide/[NVIDIA: Multi-Instance GPU User Guide^]
+* https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#extended-resources[Kubernetes: Extended Resources^]
+
+== Lab: Verify MIG Resources on the Node
+
+[[check-mig-resources]]
+=== 1. Check MIG resources in node allocatable
+
+[source,console,subs="+quotes"]
+----
+$ **oc get node $WORKER_NODE1 -o jsonpath='{.status.allocatable}' | python3 -m json.tool | grep -E 'gpu|mig'**
+    "nvidia.com/gpu": "3",
+    "nvidia.com/mig-1g.5gb": "1",
+    "nvidia.com/mig-2g.10gb": "1",
+    "nvidia.com/mig-3g.20gb": "1",
+----
+
+Key observations:
+
+* `nvidia.com/gpu` dropped from 4 to 3 -- GPU 0 is no longer a whole GPU
+* Three new MIG resource types appeared -- these are schedulable like any other extended resource
+* Each MIG instance is fully isolated with its own compute and memory
+
+You can also see the full picture with:
+
+[source,console,subs="+quotes"]
+----
+$ **oc describe node $WORKER_NODE1 | grep -A 15 "Allocatable:"**
+Allocatable:
+  cpu:                     15500m
+  ephemeral-storage:       95018478229
+  hugepages-1Gi:           0
+  hugepages-2Mi:           0
+  memory:                  64683908Ki
+  **nvidia.com/gpu:          3
+  nvidia.com/mig-1g.5gb:   1
+  nvidia.com/mig-2g.10gb:  1
+  nvidia.com/mig-3g.20gb:  1**
+  pods:                    250
+System Info:
+  Machine ID:                             a98c20284aa54f4e88271f32a7abbc9a
+  System UUID:                            a98c2028-4aa5-4f4e-8827-1f32a7abbc9a
+  Boot ID:                                b5299386-146b-499d-9cb6-6677a573d5b9
+  Kernel Version:                         5.14.0-570.114.1.el9_6.x86_64
+----
+
+If you still see `nvidia.com/gpu: 4` with no MIG resources, see xref:troubleshooting.adoc[Troubleshooting MIG].

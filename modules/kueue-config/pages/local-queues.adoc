@@ -1,0 +1,72 @@
+= Create LocalQueues
+:navtitle: LocalQueues
+
+LocalQueues expose a ClusterQueue's capacity to a specific namespace.
+Workloads in that namespace submit to the LocalQueue, which forwards them to the backing ClusterQueue for admission.
+
+== Concepts
+
+A LocalQueue is a namespace-scoped resource that acts as the entry point for workloads.
+When a workload carries the label `kueue.x-k8s.io/queue-name: <localqueue-name>`, Kueue routes it to the LocalQueue, which forwards it to the backing ClusterQueue for admission decisions.
+
+The LocalQueue-to-ClusterQueue mapping is how you enforce GPU pool isolation:
+
+* Training workloads in `training-jobs` namespace -> `training-queue` -> `a100-cluster-queue` -> A100 GPUs
+* Inference workloads in `inference-apps` namespace -> `inference-queue` -> `t4-cluster-queue` -> T4 GPUs
+
+This prevents users from accidentally (or intentionally) submitting inference work to the A100 pool or training work to the T4 pool.
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/local_queue/[Kueue: LocalQueue^]
+* https://kueue.sigs.k8s.io/docs/tasks/run/jobs/[Kueue: Running Jobs^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-localqueues_configuring-quotas[Red Hat build of Kueue: Configuring Local Queues^]
+
+== Lab: Create LocalQueues
+
+=== 1. Create LocalQueues
+
+a. Review `kueue-config/4-local-queues.yaml` before applying:
++
+[source,yaml]
+----
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: training-queue            <1>
+  namespace: training-jobs        <2>
+spec:
+  clusterQueue: a100-cluster-queue  <3>
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: inference-queue           <1>
+  namespace: inference-apps       <2>
+spec:
+  clusterQueue: t4-cluster-queue  <3>
+----
+<1> The LocalQueue name is what workloads reference in the `kueue.x-k8s.io/queue-name` label.
+<2> The `namespace` field scopes this queue to a specific namespace -- only workloads in that namespace can submit to it.
+<3> The `clusterQueue` field connects this LocalQueue to its backing ClusterQueue. This is the link that enforces GPU pool isolation: training workloads go to A100s, inference workloads go to T4s.
+
+b. Apply the configuration:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f kueue-config/4-local-queues.yaml**
+localqueue.kueue.x-k8s.io/training-queue created
+localqueue.kueue.x-k8s.io/inference-queue created
+----
+
+c. Verify:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get localqueues -A**
+NAMESPACE        NAME              CLUSTERQUEUE         PENDING WORKLOADS   ADMITTED WORKLOADS
+inference-apps   default           default              0                   0
+inference-apps   inference-queue   t4-cluster-queue     0                   0
+training-jobs    default           default              0                   0
+training-jobs    training-queue    a100-cluster-queue   0                   0
+----

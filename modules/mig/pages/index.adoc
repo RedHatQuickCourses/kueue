@@ -1,0 +1,326 @@
+= MIG Partitioning and Preemption
+:navtitle: MIG
+
+NVIDIA Multi-Instance GPU (MIG) is a hardware feature on A100 and H100 GPUs that partitions a single physical GPU into multiple isolated GPU instances.
+Each instance has its own compute resources, memory, and memory bandwidth -- completely isolated from the others, like separate physical GPUs.
+
+In this chapter, you partition one of the four A100 GPUs on worker-1 into three MIG instances of different sizes, while leaving the other three GPUs as whole devices.
+This is called *mixed mode* -- some GPUs are MIG-partitioned, others remain whole.
+You then configure Kueue to manage MIG resources alongside whole GPUs, submit workloads targeting specific MIG profiles, and exercise priority preemption within MIG slots.
+
+== Understanding MIG: Hardware-Level GPU Partitioning
+
+=== Why MIG exists
+
+Without MIG, a GPU is an all-or-nothing resource.
+If a developer needs only 5 GiB of VRAM for a small inference job, they still consume the entire 40 GiB A100.
+The other 35 GiB sits idle, and no other workload can use the GPU until the first one finishes.
+
+MIG solves this by slicing the GPU silicon itself into smaller, fully independent GPU instances.
+Each instance behaves as if it were a separate physical GPU -- with its own compute engines, its own memory, and its own memory bandwidth.
+
+=== MIG vs VM virtualization
+
+If you have experience with CPU virtualization, MIG is the closest GPU equivalent -- but stronger.
+
+[cols="2,3,3", options="header"]
+|===
+|Property |VM Virtualization (CPU) |MIG (GPU)
+
+|*Isolation mechanism*
+|Hypervisor software + hardware assist (VT-x/VT-d)
+|Physical silicon-level fences in the GPU die
+
+|*Memory isolation*
+|Hypervisor manages page tables; software-enforced
+|Dedicated memory slices with separate memory controllers; hardware-enforced
+
+|*Compute isolation*
+|CPU time-slicing via hypervisor scheduler
+|Dedicated Streaming Multiprocessors (SMs); no time-sharing
+
+|*Error isolation*
+|A crash in one VM does not affect others
+|A crash in one MIG instance does not affect others
+
+|*Performance isolation*
+|Can experience "noisy neighbor" effects
+|No noisy neighbor -- each instance has guaranteed bandwidth
+
+|*Overhead*
+|Small hypervisor overhead
+|Zero overhead -- no software layer between workload and silicon
+|===
+
+image::mig-vs-timeslicing.svg[MIG vs Time-Slicing vs VM Virtualization,width=1000]
+
+The key distinction: VM virtualization uses a *software layer* (the hypervisor) to divide resources, while MIG uses *physical fences baked into the GPU silicon*.
+A MIG instance is not a virtual GPU -- it is a physically separate section of the chip with its own memory controllers and compute engines.
+
+[sidebar]
+****
+*MIG vs time-slicing*
+
+Time-slicing is a simpler alternative where the NVIDIA driver rapidly context-switches multiple workloads on the same GPU.
+All workloads share the same 40 GiB memory pool with no fences between them.
+If one workload allocates too much VRAM, it can OOM-crash every other workload on the same GPU.
+Time-slicing is useful for development and notebooks, but MIG is required when workloads need guaranteed resources and fault isolation.
+****
+
+=== Inside the A100: Compute slices and memory slices
+
+To understand MIG profiles, you must understand the physical layout of the GPU die.
+The A100 40GB contains two types of building blocks:
+
+* *Compute slices* (also called GPU slices or GPC slices): Each contains approximately 14 Streaming Multiprocessors (SMs), which are the actual processors that execute CUDA kernels.
+* *Memory slices*: Each provides 5 GiB of HBM2e VRAM and a dedicated memory controller with its own bandwidth.
+
+The A100 40GB has *7 compute slices* and *8 memory slices*.
+This asymmetry is intentional -- NVIDIA designed the chip with one extra memory slice so that larger MIG profiles can receive bonus memory.
+
+image::mig-hardware-layout.svg[A100 GPU Hardware Layout,width=1000]
+
+=== Reading MIG profile names
+
+MIG profile names follow the format *Xg.Ygb*, where:
+
+* *Xg* = the number of *compute slices* (GPU slices) allocated to the instance. This determines processing power -- how many SMs are available.
+* *Ygb* = the *gigabytes of memory* allocated. This determines VRAM -- how large a model can be loaded.
+
+For example, `3g.20gb` means: 3 compute slices (approximately 42 SMs) and 20 GiB of VRAM (4 memory slices).
+
+[IMPORTANT]
+====
+The memory number is not always a simple multiple of the compute number.
+Because the A100 has 8 memory slices but only 7 compute slices, larger profiles receive a bonus memory slice.
+This is why `3g` gets 20 GiB (4 memory slices) instead of 15 GiB (3 memory slices).
+====
+
+=== Available MIG profiles on the A100 40GB
+
+image::mig-profiles.svg[MIG Profile Examples,width=1000]
+
+The following table lists all supported MIG profiles for the A100 40GB:
+
+[cols="2,1,1,1,3", options="header"]
+|===
+|Profile |Compute slices |Memory slices |VRAM |Typical use case
+
+|`1g.5gb`
+|1
+|1
+|5 GiB
+|Small inference, unit tests, CI/CD validation
+
+|`1g.10gb`
+|1
+|2
+|10 GiB
+|Memory-heavy tasks with minimal compute (A100 80GB only)
+
+|`2g.10gb`
+|2
+|2
+|10 GiB
+|Medium models, batch inference, data preprocessing
+
+|`3g.20gb`
+|3
+|4
+|20 GiB
+|Training, large inference, production serving
+
+|`4g.20gb`
+|4
+|4
+|20 GiB
+|Larger training jobs that need more SMs (A100 80GB only)
+
+|`7g.40gb`
+|7
+|8
+|40 GiB
+|Full GPU -- equivalent to no MIG (useful for testing)
+|===
+
+[NOTE]
+====
+Not all profiles are available on all GPU models.
+The A100 40GB supports `1g.5gb`, `2g.10gb`, `3g.20gb`, and `7g.40gb`.
+The A100 80GB and H100 80GB offer additional profiles like `1g.10gb`, `1g.20gb`, and `4g.40gb` because they have 10 GiB memory slices instead of 5 GiB.
+====
+
+=== Fitting MIG slices together: Placement rules
+
+MIG slices must fit together like Tetris blocks.
+You cannot mix any arbitrary combination -- the profiles must add up to exactly 7 compute slices and 8 memory slices (on the A100 40GB).
+
+.Valid partition combinations for the A100 40GB
+[cols="3,2,2", options="header"]
+|===
+|Combination |Compute used |Memory used
+
+|1x `7g.40gb`
+|7 of 7
+|40 of 40 GiB
+
+|1x `3g.20gb` + 1x `2g.10gb` + 2x `1g.5gb`
+|7 of 7 (3+2+1+1)
+|40 of 40 GiB (20+10+5+5)
+
+|1x `3g.20gb` + 4x `1g.5gb`
+|7 of 7 (3+1+1+1+1)
+|40 of 40 GiB (20+5+5+5+5)
+
+|3x `2g.10gb` + 1x `1g.5gb`
+|7 of 7 (2+2+2+1)
+|35 of 40 GiB (10+10+10+5)
+
+|7x `1g.5gb`
+|7 of 7
+|35 of 40 GiB
+|===
+
+[WARNING]
+====
+Some combinations waste memory.
+Seven `1g.5gb` instances use all 7 compute slices but only 35 of 40 GiB of memory -- the 8th memory slice is stranded with no compute slice to pair with.
+For maximum utilization, include at least one profile at `3g` or larger to absorb the bonus memory slice.
+====
+
+image::mig-partitioned-gpu.svg[Fully Partitioned A100,width=1000]
+
+=== This lab's partition layout
+
+In this chapter, you partition GPU 0 on worker-1 into the combination `3g.20gb` + `2g.10gb` + `1g.5gb`.
+This uses 6 of 7 compute slices and 35 of 40 GiB of memory, leaving one compute slice and one memory slice unused.
+GPUs 1-3 remain as whole devices.
+
+== What MIG Produces
+
+After partitioning GPU 0 into MIG slices, worker-1 reports:
+
+[cols="2,1,3", options="header"]
+|===
+|Resource |Count |Description
+
+|`nvidia.com/gpu`
+|3
+|GPUs 1-3 remain whole (was 4 before MIG)
+
+|`nvidia.com/mig-3g.20gb`
+|1
+|3 compute slices, 20 GiB memory
+
+|`nvidia.com/mig-2g.10gb`
+|1
+|2 compute slices, 10 GiB memory
+
+|`nvidia.com/mig-1g.5gb`
+|1
+|1 compute slice, 5 GiB memory
+|===
+
+Pods request MIG instances by resource type (e.g., `nvidia.com/mig-3g.20gb: 1`) instead of `nvidia.com/gpu`.
+
+== How the Fake GPU Operator Implements MIG
+
+The https://github.com/run-ai/fake-gpu-operator[fake GPU operator^] simulates MIG without real NVIDIA hardware.
+It uses two components that work together:
+
+* *mig-faker DaemonSet*: Runs on each GPU node and watches for MIG configuration changes.
+When you annotate a node with `run.ai/mig.config`, the mig-faker validates the requested MIG profiles, generates synthetic device UUIDs for each MIG instance, and writes them back as a `run.ai/mig-mapping` annotation.
+It also sets the `nvidia.com/mig.config.state=success` label to signal that partitioning succeeded.
+The mig-faker has hardcoded GPU Instance ID tables for A100 40GB and A100 80GB models, mapping profile names like `3g.20gb` to the correct GPU Instance IDs that real NVIDIA drivers would produce.
+
+* *device-plugin DaemonSet*: Registers GPU resources with kubelet.
+For whole GPUs, it advertises `nvidia.com/gpu`.
+For MIG, it reads the `otherDevices` section of the node's topology ConfigMap and registers each MIG profile as a separate resource type (e.g., `nvidia.com/mig-3g.20gb`).
+
+The gap between these two components is the reason Stage 3 below is manual: the mig-faker writes annotations, but the device-plugin reads the topology ConfigMap.
+Nothing in the fake GPU operator bridges the two automatically.
+
+== What's Already Automated
+
+The Helm chart (`helm-charts/fake-gpu-operator/values-ocp.yaml`) already sets `migStrategy: mixed`.
+This tells the fake GPU operator to support MIG alongside whole GPUs.
+*No Helm upgrade is needed* -- the operator is already MIG-ready.
+
+[source,yaml]
+----
+# Already set in values-ocp.yaml (no action needed)
+topology:
+  migStrategy: mixed
+----
+
+== MIG Processing Pipeline
+
+MIG partitioning in the fake GPU operator requires *three stages*.
+This mirrors the real-world workflow (node annotation + operator processing) but with an extra manual step because the device-plugin doesn't automatically update allocatable resources from MIG annotations.
+
+image::mig-processing-pipeline.svg[MIG Processing Pipeline,width=1000]
+
+.Why is Stage 3 manual?
+[sidebar]
+****
+In a real NVIDIA GPU Operator, the device-plugin natively understands MIG and advertises MIG resources to kubelet automatically.
+The fake GPU operator's device-plugin is simpler -- it only reads the topology ConfigMap.
+The mig-faker correctly processes the annotation but nothing bridges the gap to update the ConfigMap.
+This is a known limitation of the fake GPU operator, not a bug in your configuration.
+****
+
+== Automated vs Manual Summary
+
+[cols="2,2,3", options="header"]
+|===
+|Item |Automated / Manual |Details
+
+|`migStrategy: mixed`
+|*Automated* (in Helm values)
+|Already set -- no upgrade needed
+
+|mig-faker toleration fix
+|*Manual, one-time* (Step 35)
+|Patch DaemonSet to tolerate GPU taint (Helm chart bug)
+
+|Node MIG annotation
+|*Manual* (Steps 36-37)
+|Edit node name in `6a-mig-node-config.yaml`, then `oc apply`
+
+|mig-faker processing
+|*Automated* (Step 37a)
+|DaemonSet watches annotation, sets success label
+
+|Topology ConfigMap update
+|*Manual* (Step 37b)
+|Edit node name/UUIDs in `6b-mig-topology-update.yaml`, then `oc apply`
+
+|Device-plugin restart
+|*Manual* (Step 37c)
+|Delete device-plugin pod so it re-reads the ConfigMap
+
+|Update whole-GPU quota
+|*Manual* (Step 39)
+|Patch `a100-cluster-queue` from 4 to 3 GPUs
+
+|MIG Kueue resources
+|*Manual* (Steps 40-42)
+|`oc apply` the three YAML files
+|===
+
+=== References
+
+* https://docs.nvidia.com/datacenter/tesla/mig-user-guide/[NVIDIA: Multi-Instance GPU User Guide^]
+* https://kueue.sigs.k8s.io/docs/concepts/resource_flavor/[Kueue: ResourceFlavor^]
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/[Kueue: ClusterQueue^]
+* https://github.com/run-ai/fake-gpu-operator[Fake GPU Operator^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-resourceflavors_configuring-quotas[Red Hat build of Kueue: Configuring Resource Flavors^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-quotas[Red Hat build of Kueue: Configuring Quotas^]
+
+.MIG on Real vs Fake Hardware
+[sidebar]
+****
+On real NVIDIA hardware with the NVIDIA GPU Operator, MIG partitioning is fully automated: the GPU operator's device-plugin reads MIG configuration from the GPU driver and advertises MIG resource types to kubelet.
+In this lab, you perform the extra manual steps (topology ConfigMap update, device-plugin restart) because the fake GPU operator simulates GPU resources without actual hardware.
+The Kueue configuration (ResourceFlavors, ClusterQueues, LocalQueues) is identical in both cases -- Kueue doesn't know or care whether the GPUs are real or simulated.
+****

@@ -1,0 +1,163 @@
+= Install the Fake GPU Operator
+:navtitle: Fake GPU Operator
+
+The https://github.com/run-ai/fake-gpu-operator[Fake GPU Operator^] simulates NVIDIA GPUs on CPU-only nodes.
+It deploys a device plugin that advertises `nvidia.com/gpu` resources to kubelet, so pods can request GPUs and get scheduled normally -- without any physical GPU hardware.
+
+In this section, you label and taint worker nodes to create GPU pools, then install the operator via Helm.
+
+== Concepts
+
+=== Node Labels and Taints for GPU Pools
+
+In production GPU clusters, nodes with GPUs are:
+
+* *Labeled* to identify the GPU type and pool -- the scheduler uses labels to place workloads on the right hardware
+* *Tainted* with `nvidia.com/gpu=present:NoSchedule` so that only pods with a matching toleration can schedule on them -- this prevents CPU-only workloads from wasting expensive GPU node resources
+
+The Fake GPU Operator uses the label `run.ai/simulated-gpu-node-pool` to determine which GPUs to simulate on each node.
+You apply the same tainting practice used in production clusters.
+
+=== How the Device Plugin Works
+
+The operator runs a DaemonSet on each labeled node.
+The DaemonSet pod registers a Kubernetes device plugin with kubelet, advertising the configured number of `nvidia.com/gpu` resources.
+From the scheduler's perspective, these resources are indistinguishable from real GPUs.
+
+=== References
+
+* https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/[Kubernetes: Taints and Tolerations^]
+* https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/[Kubernetes: Device Plugins^]
+* https://github.com/run-ai/fake-gpu-operator[Run:ai Fake GPU Operator — GitHub^]
+* https://docs.openshift.com/container-platform/4.20/nodes/scheduling/nodes-scheduler-taints-tolerations.html[OpenShift: Controlling Pod Placement Using Node Taints^]
+
+== Lab: Install the Fake GPU Operator
+
+=== 1. Label and taint worker nodes
+
+Label each worker node to assign it to a GPU pool.
+The `run.ai/simulated-gpu-node-pool` label tells the Fake GPU Operator which GPU topology to simulate on each node -- the operator's DaemonSet reads this label and registers the corresponding GPU type and count defined in `values-ocp.yaml`.
+
+In this course, `$WORKER_NODE1` simulates 4x NVIDIA A100 GPUs (40 GiB each) for training workloads, and `$WORKER_NODE2` simulates 2x NVIDIA T4 GPUs (16 GiB each) for inference workloads.
+
+IMPORTANT: The `$WORKER_NODE1` and `$WORKER_NODE2` variables must be set before running these commands.
+If you have not set them yet, see xref:LABENV:index.adoc#_setting_worker_node_variables[Setting Worker Node Variables].
+
+a. Label worker-1 for A100 GPUs and worker-2 for T4 GPUs:
++
+[source,console,subs="+quotes"]
+----
+$ **oc label node $WORKER_NODE1 run.ai/simulated-gpu-node-pool=a100-pool**
+node/worker-cluster-vnnbf-1 labeled
+
+$ **oc label node $WORKER_NODE2 run.ai/simulated-gpu-node-pool=t4-pool**
+node/worker-cluster-vnnbf-2 labeled
+----
+
+b. Taint both GPU nodes so that only pods with a matching toleration can be scheduled:
++
+[source,console,subs="+quotes"]
+----
+$ **oc adm taint nodes $WORKER_NODE1 nvidia.com/gpu=present:NoSchedule**
+node/worker-cluster-vnnbf-1 tainted
+
+$ **oc adm taint nodes $WORKER_NODE2 nvidia.com/gpu=present:NoSchedule**
+node/worker-cluster-vnnbf-2 tainted
+----
++
+WARNING: These taints *survive cluster hibernation and reboot*.
+If the taints are present when the cluster restarts, the ODF Ceph CSI nodeplugins cannot schedule on worker nodes, which cascades to break Keycloak, OAuth, and `oc login`.
+If you plan to hibernate or shut down your cluster before completing the course, remove the taints first.
+See xref:cluster-reset:index.adoc[Cluster Reset] for the full cleanup procedure.
++
+IMPORTANT: If you open a new terminal session, re-export `$WORKER_NODE1` and `$WORKER_NODE2` before continuing.
++
+NOTE: The `NoSchedule` taint only blocks *new* pods -- existing pods keep running undisturbed.
+Most pods on these workers are DaemonSets (dns, multus, ovnkube, ceph, etc.) which tolerate all taints automatically.
+The remaining non-DaemonSet pods (operator controllers, dashboard replicas) are lightweight and will reschedule onto the control-plane nodes if they ever restart.
+No need to drain beforehand.
+
+c. Verify the labels and taints:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get nodes -l run.ai/simulated-gpu-node-pool**
+NAME                     STATUS   ROLES    AGE     VERSION
+worker-cluster-vnnbf-1   Ready    worker   3h11m   v1.33.11
+worker-cluster-vnnbf-2   Ready    worker   3h10m   v1.33.11
+
+$ **oc describe node $WORKER_NODE1 | grep -A 2 Taints**
+Taints:             nvidia.com/gpu=present:NoSchedule
+Unschedulable:      false
+Lease:
+
+$ **oc describe node $WORKER_NODE2 | grep -A 2 Taints**
+Taints:             nvidia.com/gpu=present:NoSchedule
+Unschedulable:      false
+Lease:
+----
++
+After tainting, any pod without a matching toleration will remain Pending if it tries to schedule on these nodes.
+Only pods that explicitly tolerate `nvidia.com/gpu=present:NoSchedule` will be allowed.
+
+=== 2. Review the values file
+
+Review `helm-charts/fake-gpu-operator/values-ocp.yaml` to understand the configuration:
+
+[source,console,subs="+quotes"]
+----
+$ **cat helm-charts/fake-gpu-operator/values-ocp.yaml**
+----
+
+Key settings to understand:
+
+* `environment.openshift: true` -- enables OpenShift-specific security (SCC permissions)
+* `topology.nodePools.a100-pool` -- defines 4x A100 GPUs with 40 GiB each for nodes labeled `a100-pool`
+* `topology.nodePools.t4-pool` -- defines 2x T4 GPUs with 16 GiB each for nodes labeled `t4-pool`
+* `topology.migStrategy: mixed` -- enables MIG support on capable GPUs (A100)
+
+TIP: To change GPU types, counts, or memory, edit the values file before installing.
+The topology section is where you define the simulated GPU hardware for each node pool.
+
+=== 3. Install the Fake GPU Operator
+
+a. Run the Helm install:
++
+[source,console,subs="+quotes"]
+----
+$ **helm install gpu-operator oci://ghcr.io/run-ai/fake-gpu-operator/fake-gpu-operator** \
+  **--namespace gpu-operator --create-namespace** \
+  **--version 0.0.80** \
+  **-f helm-charts/fake-gpu-operator/values-ocp.yaml**
+
+Pulled: ghcr.io/run-ai/fake-gpu-operator/fake-gpu-operator:0.0.80
+Digest: sha256:3b87aea939e304efd636b07fb8f67f915670804643124479a1284c7c40117641
+NAME: gpu-operator
+LAST DEPLOYED: Mon Jun  8 10:47:55 2026
+NAMESPACE: gpu-operator
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+----
+
+b. Label the namespace with the `privileged` Pod Security Admission level:
++
+[source,console,subs="+quotes"]
+----
+$ **oc label ns gpu-operator pod-security.kubernetes.io/enforce=privileged**
+namespace/gpu-operator labeled
+----
++
+WARNING: Without the `privileged` label, OpenShift's Pod Security Admission controller rejects the operator's pods before they can start.
+The fake GPU operator runs a DaemonSet that mounts host paths, accesses device plugin sockets, and registers fake GPU devices with kubelet -- all of which require privileged containers.
+
+.Pod Security Admission on OpenShift
+[sidebar]
+****
+OpenShift enforces https://kubernetes.io/docs/concepts/security/pod-security-admission/[Pod Security Admission (PSA)^] by default.
+Each namespace can be labeled with one of three levels: `restricted` (default), `baseline`, or `privileged`.
+The Fake GPU Operator's DaemonSet requires `privileged` because it needs host path mounts and device plugin socket access to simulate GPU hardware.
+
+In production, the real NVIDIA GPU Operator has the same requirement -- its device plugin and driver containers also need privileged access to interact with GPU hardware.
+****

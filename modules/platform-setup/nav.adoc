@@ -1,0 +1,5 @@
+* xref:index.adoc[]
+** xref:rhoai-install.adoc[]
+** xref:fake-gpu-operator.adoc[]
+** xref:verify-fake-gpus.adoc[]
+** xref:troubleshooting.adoc[]

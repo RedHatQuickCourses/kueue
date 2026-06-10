@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 620" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <linearGradient id="migGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8f5e9"/>
+      <stop offset="100%" stop-color="#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="tsGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff3e0"/>
+      <stop offset="100%" stop-color="#ffe0b2"/>
+    </linearGradient>
+    <linearGradient id="vmGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e3f2fd"/>
+      <stop offset="100%" stop-color="#bbdefb"/>
+    </linearGradient>
+    <linearGradient id="fenceGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffcdd2"/>
+      <stop offset="100%" stop-color="#ef9a9a"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="38" text-anchor="middle" font-size="28" font-weight="bold" fill="#202124">MIG vs Time-Slicing vs VM Virtualization</text>
+  <text x="550" y="66" text-anchor="middle" font-size="18" fill="#5f6368">MIG provides hardware-level isolation -- the strongest guarantee available on a GPU</text>
+
+  <!-- ========== Column 1: MIG ========== -->
+  <rect x="40" y="90" width="330" height="500" rx="12" fill="url(#migGrad)" stroke="#2e7d32" stroke-width="2" filter="url(#shadow)"/>
+  <text x="205" y="126" text-anchor="middle" font-size="22" font-weight="bold" fill="#1b5e20">MIG</text>
+  <text x="205" y="150" text-anchor="middle" font-size="14" fill="#33691e">Hardware Partitioning</text>
+
+  <!-- Physical fences -->
+  <rect x="60" y="170" width="290" height="120" rx="8" fill="#ffffff" stroke="#43a047" stroke-width="1"/>
+  <text x="205" y="195" text-anchor="middle" font-size="15" font-weight="bold" fill="#2e7d32">Physical Silicon Fences</text>
+
+  <!-- Instance boxes with walls -->
+  <rect x="75" y="208" width="80" height="66" rx="6" fill="#a5d6a7" stroke="#2e7d32" stroke-width="2"/>
+  <text x="115" y="234" text-anchor="middle" font-size="12" font-weight="600" fill="#1b5e20">Pod A</text>
+  <text x="115" y="252" text-anchor="middle" font-size="11" fill="#2e7d32">20 GiB</text>
+  <text x="115" y="266" text-anchor="middle" font-size="11" fill="#2e7d32">42 SMs</text>
+
+  <!-- Wall -->
+  <rect x="163" y="208" width="6" height="66" rx="2" fill="url(#fenceGrad)" stroke="#c62828" stroke-width="1"/>
+
+  <rect x="177" y="208" width="80" height="66" rx="6" fill="#81c784" stroke="#2e7d32" stroke-width="2"/>
+  <text x="217" y="234" text-anchor="middle" font-size="12" font-weight="600" fill="#1b5e20">Pod B</text>
+  <text x="217" y="252" text-anchor="middle" font-size="11" fill="#2e7d32">10 GiB</text>
+  <text x="217" y="266" text-anchor="middle" font-size="11" fill="#2e7d32">28 SMs</text>
+
+  <!-- Wall -->
+  <rect x="265" y="208" width="6" height="66" rx="2" fill="url(#fenceGrad)" stroke="#c62828" stroke-width="1"/>
+
+  <rect x="279" y="208" width="56" height="66" rx="6" fill="#66bb6a" stroke="#2e7d32" stroke-width="2"/>
+  <text x="307" y="234" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Pod C</text>
+  <text x="307" y="252" text-anchor="middle" font-size="11" fill="#fff">5 GiB</text>
+  <text x="307" y="266" text-anchor="middle" font-size="11" fill="#fff">14 SMs</text>
+
+  <!-- Properties -->
+  <text x="75" y="320" font-size="14" font-weight="bold" fill="#1b5e20">Isolation:</text>
+  <text x="75" y="340" font-size="13" fill="#33691e">Dedicated compute + memory</text>
+  <text x="75" y="358" font-size="13" fill="#33691e">Hardware-enforced boundaries</text>
+  <text x="75" y="376" font-size="13" fill="#33691e">One pod cannot crash another</text>
+
+  <text x="75" y="406" font-size="14" font-weight="bold" fill="#1b5e20">Limits:</text>
+  <text x="75" y="426" font-size="13" fill="#33691e">Max 7 instances per GPU</text>
+  <text x="75" y="444" font-size="13" fill="#33691e">Fixed profile sizes only</text>
+  <text x="75" y="462" font-size="13" fill="#33691e">Requires GPU reconfig</text>
+
+  <rect x="60" y="480" width="290" height="36" rx="6" fill="#c8e6c9" stroke="#66bb6a" stroke-width="1"/>
+  <text x="205" y="504" text-anchor="middle" font-size="14" font-weight="bold" fill="#1b5e20">Like separate physical GPUs</text>
+
+  <!-- ========== Column 2: Time-Slicing ========== -->
+  <rect x="390" y="90" width="330" height="500" rx="12" fill="url(#tsGrad)" stroke="#ef6c00" stroke-width="2" filter="url(#shadow)"/>
+  <text x="555" y="126" text-anchor="middle" font-size="22" font-weight="bold" fill="#bf360c">Time-Slicing</text>
+  <text x="555" y="150" text-anchor="middle" font-size="14" fill="#e65100">Software Multiplexing</text>
+
+  <!-- Shared pool -->
+  <rect x="410" y="170" width="290" height="120" rx="8" fill="#ffffff" stroke="#ef6c00" stroke-width="1"/>
+  <text x="555" y="195" text-anchor="middle" font-size="15" font-weight="bold" fill="#e65100">Shared Memory Pool (No Fences)</text>
+
+  <!-- Instances sharing memory -->
+  <rect x="425" y="208" width="80" height="66" rx="6" fill="#ffcc80" stroke="#ef6c00" stroke-width="1.5"/>
+  <text x="465" y="234" text-anchor="middle" font-size="12" font-weight="600" fill="#bf360c">Pod A</text>
+  <text x="465" y="252" text-anchor="middle" font-size="11" fill="#e65100">15 GiB</text>
+  <text x="465" y="266" text-anchor="middle" font-size="11" fill="#e65100">shared</text>
+
+  <!-- No wall - just overlap indicator -->
+  <text x="516" y="244" font-size="18" fill="#d84315">~</text>
+
+  <rect x="527" y="208" width="80" height="66" rx="6" fill="#ffb74d" stroke="#ef6c00" stroke-width="1.5"/>
+  <text x="567" y="234" text-anchor="middle" font-size="12" font-weight="600" fill="#bf360c">Pod B</text>
+  <text x="567" y="252" text-anchor="middle" font-size="11" fill="#e65100">20 GiB</text>
+  <text x="567" y="266" text-anchor="middle" font-size="11" fill="#e65100">shared</text>
+
+  <text x="618" y="244" font-size="18" fill="#d84315">~</text>
+
+  <rect x="629" y="208" width="56" height="66" rx="6" fill="#ffa726" stroke="#ef6c00" stroke-width="1.5"/>
+  <text x="657" y="234" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Pod C</text>
+  <text x="657" y="252" text-anchor="middle" font-size="11" fill="#fff">5 GiB</text>
+  <text x="657" y="266" text-anchor="middle" font-size="11" fill="#fff">shared</text>
+
+  <!-- Properties -->
+  <text x="425" y="320" font-size="14" font-weight="bold" fill="#bf360c">Isolation:</text>
+  <text x="425" y="340" font-size="13" fill="#e65100">Compute is time-multiplexed</text>
+  <text x="425" y="358" font-size="13" fill="#e65100">Memory is a shared free-for-all</text>
+  <text x="425" y="376" font-size="13" fill="#c62828" font-weight="600">One pod CAN OOM-crash others</text>
+
+  <text x="425" y="406" font-size="14" font-weight="bold" fill="#bf360c">Limits:</text>
+  <text x="425" y="426" font-size="13" fill="#e65100">Unlimited replicas (e.g. 48)</text>
+  <text x="425" y="444" font-size="13" fill="#e65100">No GPU reconfiguration needed</text>
+  <text x="425" y="462" font-size="13" fill="#e65100">Quick to enable/disable</text>
+
+  <rect x="410" y="480" width="290" height="36" rx="6" fill="#ffe0b2" stroke="#ffb74d" stroke-width="1"/>
+  <text x="555" y="504" text-anchor="middle" font-size="14" font-weight="bold" fill="#bf360c">Like threads sharing RAM</text>
+
+  <!-- ========== Column 3: VM Analogy ========== -->
+  <rect x="740" y="90" width="330" height="500" rx="12" fill="url(#vmGrad)" stroke="#1565c0" stroke-width="2" filter="url(#shadow)"/>
+  <text x="905" y="126" text-anchor="middle" font-size="22" font-weight="bold" fill="#0d47a1">VM Virtualization</text>
+  <text x="905" y="150" text-anchor="middle" font-size="14" fill="#1565c0">Software + Hardware (CPU)</text>
+
+  <!-- Hypervisor -->
+  <rect x="760" y="170" width="290" height="120" rx="8" fill="#ffffff" stroke="#1565c0" stroke-width="1"/>
+  <text x="905" y="195" text-anchor="middle" font-size="15" font-weight="bold" fill="#1565c0">Hypervisor-Enforced Boundaries</text>
+
+  <!-- VM boxes -->
+  <rect x="775" y="208" width="80" height="66" rx="6" fill="#90caf9" stroke="#1565c0" stroke-width="2"/>
+  <text x="815" y="234" text-anchor="middle" font-size="12" font-weight="600" fill="#0d47a1">VM 1</text>
+  <text x="815" y="252" text-anchor="middle" font-size="11" fill="#1565c0">4 vCPU</text>
+  <text x="815" y="266" text-anchor="middle" font-size="11" fill="#1565c0">8 GiB</text>
+
+  <!-- Software wall -->
+  <rect x="863" y="208" width="6" height="66" rx="2" fill="#bbdefb" stroke="#42a5f5" stroke-width="1" stroke-dasharray="4,2"/>
+
+  <rect x="877" y="208" width="80" height="66" rx="6" fill="#64b5f6" stroke="#1565c0" stroke-width="2"/>
+  <text x="917" y="234" text-anchor="middle" font-size="12" font-weight="600" fill="#0d47a1">VM 2</text>
+  <text x="917" y="252" text-anchor="middle" font-size="11" fill="#0d47a1">2 vCPU</text>
+  <text x="917" y="266" text-anchor="middle" font-size="11" fill="#0d47a1">4 GiB</text>
+
+  <!-- Software wall -->
+  <rect x="965" y="208" width="6" height="66" rx="2" fill="#bbdefb" stroke="#42a5f5" stroke-width="1" stroke-dasharray="4,2"/>
+
+  <rect x="979" y="208" width="56" height="66" rx="6" fill="#42a5f5" stroke="#1565c0" stroke-width="2"/>
+  <text x="1007" y="234" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">VM 3</text>
+  <text x="1007" y="252" text-anchor="middle" font-size="11" fill="#fff">1 vCPU</text>
+  <text x="1007" y="266" text-anchor="middle" font-size="11" fill="#fff">2 GiB</text>
+
+  <!-- Properties -->
+  <text x="775" y="320" font-size="14" font-weight="bold" fill="#0d47a1">Isolation:</text>
+  <text x="775" y="340" font-size="13" fill="#1565c0">Hypervisor manages access</text>
+  <text x="775" y="358" font-size="13" fill="#1565c0">Software-enforced boundaries</text>
+  <text x="775" y="376" font-size="13" fill="#1565c0">VT-x/VT-d hardware assist</text>
+
+  <text x="775" y="406" font-size="14" font-weight="bold" fill="#0d47a1">Key difference from MIG:</text>
+  <text x="775" y="426" font-size="13" fill="#1565c0">CPU VMs use software layer</text>
+  <text x="775" y="444" font-size="13" fill="#1565c0">MIG uses silicon-level fences</text>
+  <text x="775" y="462" font-size="13" fill="#1565c0">No hypervisor overhead in MIG</text>
+
+  <rect x="760" y="480" width="290" height="36" rx="6" fill="#bbdefb" stroke="#64b5f6" stroke-width="1"/>
+  <text x="905" y="504" text-anchor="middle" font-size="14" font-weight="bold" fill="#0d47a1">Like VMs but even stronger</text>
+</svg>

@@ -1,0 +1,160 @@
+= Demonstrate Reclaim Failure
+:navtitle: Reclaim Failure
+
+Now you discover the limitation of cohort borrowing without reclaim: when the lender needs its GPU back, it *cannot* take it.
+
+The A100 pool has 4 GPUs total, with 1 currently lent to the inference queue.
+If you submit 4 training jobs -- each requesting 1 A100 GPU -- the first 3 are admitted, but the 4th must wait because the borrowed GPU is still in use.
+
+*The key question:* Can the training pool reclaim its lent GPU?
+Without `reclaimWithinCohort` configured, the answer is *no*.
+
+== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#preemption[Kueue: Preemption (reclaimWithinCohort)^]
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#cohort[Kueue: Cohort^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#using-cohorts[Red Hat build of Kueue: Using Cohorts^]
+
+== Lab: Demonstrate the Reclaim Problem
+
+[[submit-nopreempt]]
+=== 1. Submit training jobs
+
+a. Review `workloads/job-cohort-nopreempt.yaml` before applying.
+The file contains 4 identical training Jobs, each requesting 1 A100 GPU.
+The structure is the same as previous training Jobs -- only the names differ (`training-fill-1` through `training-fill-4`):
++
+
+[source,yaml]
+----
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: training-fill-1                               <1>
+  namespace: training-jobs
+  labels:
+    kueue.x-k8s.io/queue-name: training-queue
+spec:
+  suspend: true
+  template:
+    ...
+    spec:
+      containers:
+      - name: training-workload
+        ...
+        resources:
+          requests:
+            nvidia.com/gpu: "1"                        <2>
+----
+<1> Four Jobs: `training-fill-1` through `training-fill-4`. All submit to `training-queue` -> `a100-cluster-queue`.
+<2> Each requests 1 GPU. With 4 A100 GPUs total but 1 already lent to `inference-borrow`, only 3 GPUs are available. The 4th Job must wait.
+
+b. Apply the workloads:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/job-cohort-nopreempt.yaml**
+job.batch/training-fill-1 created
+job.batch/training-fill-2 created
+job.batch/training-fill-3 created
+job.batch/training-fill-4 created
+----
+
+=== 2. Verify job 4 stays pending
+
+a. Wait a moment for Kueue to process the jobs, then check their status:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get jobs -n training-jobs -l 'kueue.x-k8s.io/queue-name=training-queue'**
+NAME              STATUS      COMPLETIONS   DURATION   AGE
+training-fill-1   Running     0/1           18s        18s
+training-fill-2   Running     0/1           17s        17s
+training-fill-3   Running     0/1           16s        16s
+training-fill-4   Suspended   0/1                      15s
+----
++
+You should see `training-fill-1` through `training-fill-3` running, and `training-fill-4` suspended.
+
+b. Verify via Kueue workloads:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n training-jobs**
+NAME                        QUEUE            RESERVED IN          ADMITTED   FINISHED   AGE
+job-training-fill-1-d1940   training-queue   a100-cluster-queue   True                  50s
+job-training-fill-2-06c84   training-queue   a100-cluster-queue   True                  49s
+job-training-fill-3-31651   training-queue   a100-cluster-queue   True                  48s
+job-training-fill-4-92aea   training-queue                                              47s
+----
++
+The first 3 workloads show `ADMITTED: true`, but `training-fill-4` does not -- it is queued, waiting for a GPU.
+
+c. Check why the A100 pool is full:
++
+[source,console,subs="+quotes"]
+----
+$ **oc describe clusterqueue a100-cluster-queue | grep -A 25 "Flavors Usage" | grep -B 1 -A 1 "nvidia.com/gpu"**
+      Borrowed:         0
+      Name:             nvidia.com/gpu
+      **Total:            3**
+
+$ **oc describe clusterqueue t4-cluster-queue | grep -A 25 "Flavors Usage" | grep -B 1 -A 1 "nvidia.com/gpu"**
+      Borrowed:  0
+      Name:      nvidia.com/gpu
+      Total:     2
+--
+      **Borrowed:         1**
+      Name:             nvidia.com/gpu
+      Total:            1
+----
++
+The A100 queue shows Total: 3 (training jobs), and the T4 queue shows Borrowed: 1 on its `a100-gpu` flavor (inference borrower). That accounts for all 4 A100 GPUs (3 + 1 = 4), so `training-fill-4` has no GPU available.
+The training pool *cannot reclaim* the lent GPU because `reclaimWithinCohort` is not set in the current configuration.
+
+.Why can't Kueue reclaim the GPU?
+[sidebar]
+****
+Check the A100 queue's preemption configuration:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueue a100-cluster-queue -o yaml | grep -A 5 "preemption:"**
+  preemption:
+    borrowWithinCohort:
+      policy: Never
+    **reclaimWithinCohort: Never**
+    withinClusterQueue: LowerPriority
+----
+
+`reclaimWithinCohort: Never` (the default) means Kueue will never preempt a workload that borrowed a GPU from this pool -- even when the pool's own workloads need it.
+The xref:reclaim-fix.adoc[next section] changes this to `reclaimWithinCohort: Any` to solve the problem.
+****
+
+WARNING: This is a deliberate design exercise.
+Without `reclaimWithinCohort`, lending is a one-way street -- the lender gives up resources but has no mechanism to take them back.
+In production, always configure `reclaimWithinCohort` on ClusterQueues that participate in a cohort.
+
+=== 3. Clean up training jobs
+
+a. Delete the training jobs:
++
+[source,console,subs="+quotes"]
+----
+$ **oc delete -f workloads/job-cohort-nopreempt.yaml**
+job.batch "training-fill-1" deleted from training-jobs namespace
+job.batch "training-fill-2" deleted from training-jobs namespace
+job.batch "training-fill-3" deleted from training-jobs namespace
+job.batch "training-fill-4" deleted from training-jobs namespace
+----
+
+b. Verify they are gone:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get jobs -n training-jobs**
+No resources found in training-jobs namespace.
+----
++
+NOTE: The inference deployments from xref:borrowing.adoc#submit-borrowing[Submit inference Deployments] are still running.
+Do not delete them -- they are needed for the reclaim exercise in the xref:reclaim-fix.adoc[next section].

@@ -1,0 +1,128 @@
+= Create Kueue-Managed Namespaces
+:navtitle: Namespaces
+
+Kueue only manages workloads in namespaces that are explicitly labeled.
+In this section, you create two namespaces -- one for training workloads and one for inference workloads.
+
+== Concepts
+
+A namespace must have the label `kueue.openshift.io/managed: "true"` for Kueue to track workloads in it.
+Without this label, workloads in the namespace are invisible to Kueue regardless of whether they carry a queue-name label.
+
+Separating training and inference into different namespaces enforces workload isolation at the namespace level -- training jobs can only access A100 GPUs, and inference apps can only access T4 GPUs.
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/tasks/manage/setup_multikueue/[Kueue: Namespace Management^]
+* https://docs.openshift.com/container-platform/4.20/authentication/managing-security-context-constraints.html[OpenShift: Managing Security Context Constraints^]
+* https://kubernetes.io/docs/concepts/security/pod-security-admission/[Kubernetes: Pod Security Admission^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#label-namespaces_install-kueue[Red Hat build of Kueue: Labeling Namespaces^]
+
+== Lab: Create Namespaces
+
+=== 1. Create Kueue-managed namespaces
+
+a. Review `kueue-config/1-namespaces.yaml` before applying:
++
+[source,yaml]
+----
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: training-jobs
+  labels:
+    kueue.openshift.io/managed: "true"  <1>
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: inference-apps
+  labels:
+    kueue.openshift.io/managed: "true"  <1>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding                       <2>
+metadata:
+  name: default-scc-restricted-v3
+  namespace: training-jobs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:restricted-v3  <3>
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: training-jobs
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding                       <2>
+metadata:
+  name: default-scc-restricted-v3
+  namespace: inference-apps
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:restricted-v3  <3>
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: inference-apps
+----
+<1> The `kueue.openshift.io/managed: "true"` label tells Kueue to track workloads in this namespace. Without it, workloads are invisible to Kueue.
+<2> A RoleBinding in each namespace grants the `default` ServiceAccount the `restricted-v3` SCC -- a safety net for raw Pod workloads (see sidebar below).
+<3> The `system:openshift:scc:restricted-v3` ClusterRole provides the minimum SCC permissions needed for pod scheduling.
++
+The file creates two namespaces with different purposes:
++
+[cols="1,3", options="header"]
+|===
+|Namespace |Purpose
+
+|`training-jobs`
+|Long-running GPU training workloads (targets A100s)
+
+|`inference-apps`
+|Model inference services (targets T4s)
+|===
+
+b. Apply the configuration:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f kueue-config/1-namespaces.yaml**
+namespace/training-jobs created
+namespace/inference-apps created
+rolebinding.rbac.authorization.k8s.io/default-scc-restricted-v3 created
+rolebinding.rbac.authorization.k8s.io/default-scc-restricted-v3 created
+----
++
+Each namespace also gets a RoleBinding granting the `default` ServiceAccount the `restricted-v3` SCC.
+This is a safety net for raw Pod workloads -- see the note below for details.
++
+.OpenShift SCC and Kueue -- Why This RoleBinding Exists
+[sidebar]
+****
+On OpenShift, when any controller patches a pod, the SCC admission webhook re-validates the pod's security context under the *patching controller's ServiceAccount*, not the pod's own ServiceAccount.
+
+Kueue manages workloads differently depending on the resource type:
+
+* *Jobs and Deployments* -- Kueue patches the parent object (suspend/unsuspend). The *Job controller* or *Deployment controller* then creates the pods. These built-in controllers have proper SCC access, so pod creation succeeds without any extra configuration.
+
+* *Raw Pods* -- Kueue patches the pod directly to remove scheduling gates. This triggers SCC re-validation under the `kueue-controller-manager` ServiceAccount, which has *no SCC access*. The result is: `pods "pod-name" is forbidden: unable to validate against any security context constraint`. The pod stays stuck in `SchedulingGated` status forever.
+****
++
+*This lab uses Jobs and Deployments exclusively, so the RoleBinding is not strictly required.* It is included as a safety net in case you experiment with raw Pod workloads. If you only use Jobs and Deployments, you can safely remove these RoleBindings.
++
+NOTE: Even with the namespace level RoleBinding, raw Pod workloads on OpenShift may still encounter SCC issues because the re-validation runs under the Kueue controller's identity, not the pod's SA. The most reliable approach on OpenShift is to use `Jobs` or `Deployments`.
+
+c. Verify labels on namespaces:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get ns training-jobs inference-apps --show-labels**
+NAME             STATUS   AGE    LABELS
+training-jobs    Active   114s   kubernetes.io/metadata.name=training-jobs,kueue-managed=true,kueue.openshift.io/managed=true,...
+inference-apps   Active   113s   kubernetes.io/metadata.name=inference-apps,kueue-managed=true,kueue.openshift.io/managed=true...
+----
++
+Look for the `kueue.openshift.io/managed=true` label on both namespaces.

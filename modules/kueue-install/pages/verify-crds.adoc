@@ -1,0 +1,89 @@
+= Verify Kueue CRDs
+:navtitle: Verify CRDs
+
+With the operator running and configured, you now verify that all Kueue Custom Resource Definitions (CRDs) are registered on the cluster.
+These CRDs define the API resources you will create in the xref:kueue-config:index.adoc[next chapter].
+
+== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/[Kueue: ClusterQueue^]
+* https://kueue.sigs.k8s.io/docs/concepts/local_queue/[Kueue: LocalQueue^]
+* https://kueue.sigs.k8s.io/docs/concepts/resource_flavor/[Kueue: ResourceFlavor^]
+* https://kueue.sigs.k8s.io/docs/concepts/workload_priority_class/[Kueue: WorkloadPriorityClass^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-quotas[Red Hat build of Kueue: Configuring Quotas^]
+
+== Lab: Verify CRDs
+
+=== 1. Verify Kueue CRDs are available
+
+Once the operator is running, confirm the Kueue CRDs are registered:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get crd | grep kueue**
+admissionchecks.kueue.x-k8s.io            
+clusterqueues.kueue.x-k8s.io              
+cohorts.kueue.x-k8s.io                    
+kueues.components.platform.opendatahub.io 
+kueues.kueue.openshift.io                 
+localqueues.kueue.x-k8s.io                
+multikueueclusters.kueue.x-k8s.io         
+multikueueconfigs.kueue.x-k8s.io          
+provisioningrequestconfigs.kueue.x-k8s.io 
+resourceflavors.kueue.x-k8s.io            
+topologies.kueue.x-k8s.io                 
+workloadpriorityclasses.kueue.x-k8s.io    
+workloads.kueue.x-k8s.io                  
+----
+
+You should see CRDs including `clusterqueues.kueue.x-k8s.io`, `localqueues.kueue.x-k8s.io`, `resourceflavors.kueue.x-k8s.io`, and `workloadpriorityclasses.kueue.x-k8s.io`.
+
+NOTE: If the CRDs are not listed, the Kueue operator may not have finished installing.
+Check `oc get csv -n openshift-kueue-operator` and verify the **PHASE** is `Succeeded`.
+
+== Summary
+
+You have completed the Kueue operator installation:
+
+* The Kueue operator is running in `openshift-kueue-operator`
+* The `labelPolicy` is set to `QueueName` -- only explicitly labeled workloads are managed
+* `BatchJob` is enabled in the managed frameworks -- Kubernetes Jobs will be tracked by Kueue
+* All Kueue CRDs are registered and ready for use
+
+In the xref:kueue-config:index.adoc[next chapter], you create ResourceFlavors, ClusterQueues, LocalQueues, and WorkloadPriorityClasses to build the GPU quota management system.
+
+== Customization Options
+
+You do not need to make any of these changes for this course.
+They are documented here for reference.
+
+=== Change the Kueue Channel
+
+Edit `helm-charts/kueue/values.yaml` to pin a specific channel:
+
+[source,yaml]
+----
+kueue:
+  channel: stable-v1.2   # Use Kueue 1.2 instead of latest stable
+----
+
+=== Override via Command Line
+
+[source,console,subs="+quotes"]
+----
+$ **helm install kueue ./helm-charts/kueue --set kueue.channel=stable-v1.2**
+----
+
+== Uninstall Kueue
+
+[source,console,subs="+quotes"]
+----
+$ **helm uninstall kueue**
+
+$ **oc get csv -n openshift-kueue-operator | grep kueue | awk '{print $1}' | xargs oc delete csv -n openshift-kueue-operator**
+
+$ **oc delete ns openshift-kueue-operator**
+----
+
+CAUTION: Uninstalling Kueue removes the operator, but Kueue CRDs and any ClusterQueues, LocalQueues, and ResourceFlavors you created will remain on the cluster as orphaned resources.
+Delete them manually with `oc delete clusterqueue --all`, `oc delete localqueue --all -A`, and `oc delete resourceflavor --all` if you want a clean removal.

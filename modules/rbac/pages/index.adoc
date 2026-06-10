@@ -1,0 +1,117 @@
+= Kueue RBAC
+:navtitle: RBAC
+
+In a real GPU cluster, not every user should be able to create ClusterQueues or modify resource quotas.
+Kueue separates administrative tasks (setting up queues, flavors, and quotas) from day-to-day user tasks (submitting jobs, checking workload status) using Kubernetes role-based access control (RBAC).
+
+== How RBAC Works in Kueue
+
+The Kueue operator automatically deploys two *aggregated ClusterRoles* when it starts.
+You don't create these roles -- they already exist.
+You only create *bindings* to assign them to users.
+
+=== `kueue-batch-admin-role`
+
+This role is for *platform administrators* who manage the Kueue infrastructure.
+It aggregates permissions from multiple sub-roles (ClusterQueue editor, LocalQueue editor, ResourceFlavor editor, Workload editor, Job editor) into a single role with full CRUD access to all Kueue resources.
+
+=== `kueue-batch-user-role`
+
+This role is for *data scientists and developers* who submit and monitor batch workloads.
+It aggregates permissions that allow full Job management but only *read-only* access to namespace-scoped Kueue resources.
+Users can see LocalQueues and Workloads in their namespace and check the status of their workloads, but they cannot modify the queue configuration.
+
+== Permission Matrix
+
+The table below shows what each ClusterRole grants.
+Effective permissions also depend on the *binding type* -- see the important note after the table.
+
+[cols="2,3,3", options="header"]
+|===
+|Resource |`kueue-batch-admin-role` |`kueue-batch-user-role`
+
+|`clusterqueues`
+|create, delete, get, list, patch, update, watch
+|get, list, watch (in the role, but see note below)
+
+|`resourceflavors`
+|create, delete, get, list, patch, update, watch
+|-- (not in the role)
+
+|`workloadpriorityclasses`
+|create, delete, get, list, patch, update, watch
+|-- (not in the role)
+
+|`localqueues`
+|create, delete, get, list, patch, update, watch
+|get, list, watch (view only)
+
+|`workloads`
+|create, delete, get, list, patch, update, watch
+|get, list, watch (view only)
+
+|`jobs` (batch API)
+|create, delete, get, list, patch, update, watch
+|create, delete, get, list, patch, update, watch
+|===
+
+[IMPORTANT]
+====
+*Binding type affects cluster-scoped resources.*
+The `kueue-batch-user-role` includes `get, list, watch` on ClusterQueues.
+However, because users are bound with a *RoleBinding* (namespace-scoped), they *cannot* actually view ClusterQueues -- the Kubernetes API server only grants cluster-scoped permissions through a *ClusterRoleBinding*.
+
+On RHOAI clusters, `resourceflavors` and `workloadpriorityclasses` are accessible to all authenticated users through default cluster permissions set by the RHOAI operator -- not through the Kueue roles.
+====
+
+== Where Do Permissions Come From?
+
+On RHOAI, a user's effective permissions come from three independent layers -- not just the Kueue roles.
+Understanding which layer is responsible for which permission is key to troubleshooting RBAC issues.
+
+image::kueue-rbac-layers.svg[Three permission layers in Kueue on RHOAI,1100]
+
+== Binding Types
+
+The two roles use different binding types, which is an intentional design choice:
+
+* *`kueue-batch-admin-role`* is bound with a *ClusterRoleBinding* -- the admin needs cluster-wide access because ClusterQueues, ResourceFlavors, and WorkloadPriorityClasses are cluster-scoped resources.
+* *`kueue-batch-user-role`* is bound with a *RoleBinding* scoped to a specific namespace -- users should only see queues and workloads in the namespaces they work in, not across the entire cluster.
+
+image::kueue-rbac.svg[Kueue RBAC bindings showing admin and user role scope,1100]
+
+.Why the `edit` role is also needed
+[sidebar]
+****
+The Kueue batch roles only cover Kueue API resources (`kueue.x-k8s.io`) and the batch API (`batch/v1` Jobs).
+They don't include permissions for pods, logs, events, or other core Kubernetes resources.
+Without the OpenShift `edit` role, users couldn't run `oc get pods`, `oc logs`, or see events in their namespace.
+****
+
+CAUTION: Never bind `kueue-batch-user-role` to the `system:authenticated` group -- this would give every authenticated user the ability to create Jobs in any namespace where they have a RoleBinding.
+Always bind to specific users or groups, scoped to specific namespaces, following the principle of least privilege.
+
+== Prerequisites
+
+This exercise requires:
+
+* The Kueue operator is running (xref:kueue-install:index.adoc[Install the Red Hat Build of Kueue^])
+* The `training-jobs` namespace and `training-queue` LocalQueue exist (xref:kueue-config:index.adoc[Configure Kueue Resources^])
+* Two OpenShift users: `admin` and `user1` (Automatically created for RHDP users)
+
+IMPORTANT: Replace `admin` and `user1` in the YAML files with the actual usernames on your cluster before applying.
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/tasks/manage/rbac/[Kueue: RBAC^]
+* https://kubernetes.io/docs/reference/access-authn-authz/rbac/[Kubernetes: RBAC Authorization^]
+* https://docs.openshift.com/container-platform/latest/authentication/using-rbac.html[OpenShift: Using RBAC^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#rbac-permissions[Red Hat build of Kueue: Configuring Role-Based Permissions^]
+
+.Production Considerations
+[sidebar]
+****
+In production, you would typically bind Kueue roles to *groups* rather than individual users.
+For example, bind `kueue-batch-admin-role` to an `admin` group synced from your identity provider (LDAP, OIDC), and bind `kueue-batch-user-role` to a `data-scientists` group scoped to each team's namespace.
+This scales better than per-user bindings and follows the principle of least privilege.
+****

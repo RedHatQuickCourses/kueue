@@ -1,0 +1,94 @@
+= Create ClusterQueues
+:navtitle: ClusterQueues
+
+ClusterQueues define the cluster-wide quota for each GPU type.
+Each ClusterQueue is tied to a specific ResourceFlavor and sets limits on how many GPUs, CPUs, and memory can be consumed.
+
+== Concepts
+
+A ClusterQueue is the central resource in Kueue's quota system.
+It defines:
+
+* *Resource groups* -- which ResourceFlavors are available and what the quota limits are for each resource type (GPU, CPU, memory)
+* *Preemption policy* -- what happens when the queue is full and a higher-priority workload arrives
+
+ClusterQueues are cluster-scoped -- they are not tied to any namespace.
+Workloads reach a ClusterQueue through a LocalQueue (created in the xref:local-queues.adoc[next section]).
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/[Kueue: ClusterQueue^]
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#preemption[Kueue: Preemption^]
+* https://kubernetes.io/docs/concepts/policy/resource-quotas/[Kubernetes: Resource Quotas (for comparison)^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-clusterqueues_configuring-quotas[Red Hat build of Kueue: Configuring Cluster Queues^]
+
+== Lab: Create ClusterQueues
+
+=== 1. Create ClusterQueues
+
+a. Review `kueue-config/3-cluster-queues.yaml` before applying.
+Only the first ClusterQueue is shown here -- the second (`t4-cluster-queue`) follows the same structure with different quotas:
++
+[source,yaml]
+----
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: a100-cluster-queue
+spec:
+  namespaceSelector: {}                                    <1>
+  preemption:
+    withinClusterQueue: LowerPriority                      <2>
+  resourceGroups:
+  - coveredResources: ["cpu", "memory", "nvidia.com/gpu"]  <3>
+    flavors:
+    - name: a100-gpu                                       <4>
+      resources:
+      - name: cpu
+        nominalQuota: 16                                   <5>
+      - name: memory
+        nominalQuota: 64Gi                                 <5>
+      - name: nvidia.com/gpu
+        nominalQuota: 4                                    <5>
+----
+<1> An empty `namespaceSelector` means any namespace can use this ClusterQueue (access is controlled by LocalQueues, not namespace selectors).
+<2> `withinClusterQueue: LowerPriority` allows high-priority workloads to preempt lower-priority ones within the same queue when quota is exhausted.
+<3> The `coveredResources` list defines which resource types this queue manages -- CPU, memory, and GPU.
+<4> The `a100-gpu` flavor links this queue to the ResourceFlavor created in the previous step. This is how Kueue knows which nodes satisfy this queue's quota.
+<5> The `nominalQuota` values set the maximum resources that can be consumed through this queue. The GPU quota (4) matches the number of fake A100 GPUs on worker-1.
++
+The second ClusterQueue (`t4-cluster-queue`) uses the `t4-gpu` flavor with quotas matching worker-2: 2 GPUs, 8 CPUs, 32 GiB memory.
+
+b. Apply the configuration:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f kueue-config/3-cluster-queues.yaml**
+clusterqueue.kueue.x-k8s.io/a100-cluster-queue created
+clusterqueue.kueue.x-k8s.io/t4-cluster-queue created
+----
+
+c. Verify:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueues -o wide**
+NAME                 COHORT   STRATEGY         PENDING WORKLOADS   ADMITTED WORKLOADS
+a100-cluster-queue            BestEffortFIFO   0                   0
+default                       BestEffortFIFO   0                   0
+t4-cluster-queue              BestEffortFIFO   0                   0
+----
+
+NOTE: You will also see a ClusterQueue named `default` created by the RHOAI platform.
+This is a catch-all queue with inflated quotas covering all cluster resources.
+It is harmless: since xref:kueue-install:configure-operator.adoc#disable-defaulting[Disable LocalQueue defaulting] set `labelPolicy: QueueName`, no workload reaches this queue unless explicitly labeled to do so.
+Only your custom `a100-cluster-queue` and `t4-cluster-queue` are used.
+
+.Preemption: withinClusterQueue vs reclaimWithinCohort
+[sidebar]
+****
+The `withinClusterQueue: LowerPriority` preemption policy configured here means that within the *same* ClusterQueue, a high-priority workload can evict a low-priority one to free capacity.
+
+In later chapters, you will also configure `reclaimWithinCohort` for cross-queue preemption (xref:cohort-borrowing:index.adoc[Cohort Borrowing]) and `preemptionPolicy: FairSharing` for proportional preemption (xref:fair-sharing:index.adoc[Fair Sharing]).
+These are layered on top of the basic preemption policy set here.
+****

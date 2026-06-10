@@ -1,0 +1,381 @@
+= MIG Priority Preemption
+:navtitle: MIG Preemption
+
+In the previous section, the MIG workloads all fit simultaneously -- one job per profile, no contention.
+But what happens when two jobs compete for the same MIG slice?
+The `mig-cluster-queue` has `withinClusterQueue: LowerPriority` preemption, which means a high-priority job can evict a low-priority one occupying the same MIG resource.
+
+In this exercise, low-priority jobs fill all three MIG slots.
+Then a high-priority job arrives requesting the largest slice (`3g.20gb`).
+Kueue preempts the low-priority job on that slice and admits the high-priority one in its place.
+
+== How MIG Preemption Works
+
+image::mig-preemption.svg[MIG priority preemption showing before and after states,1100]
+
+== Prerequisites
+
+This exercise requires the MIG configuration from the previous sections.
+Ensure:
+
+* Worker-1 has MIG labels and annotations applied
+* `mig-cluster-queue`, `a100-mig` flavor, and `mig-training-queue` exist
+* WorkloadPriorityClasses (`low-priority`, `high-priority`) exist from xref:kueue-config:priority-classes.adoc[Create WorkloadPriorityClasses^]
+
+Clean up any workloads from previous exercises:
+
+[source,console,subs="+quotes"]
+----
+$ **oc delete jobs --all -n training-jobs 2>/dev/null**
+----
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#preemption[Kueue: Preemption^]
+* https://kueue.sigs.k8s.io/docs/concepts/workload/#priority[Kueue: Workload Priority^]
+* https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/[Kubernetes: Pod Priority and Preemption^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-quotas[Red Hat build of Kueue: Configuring Quotas^]
+
+== Lab: MIG Priority Preemption Exercise
+
+=== 1. Fill all MIG slots with low-priority jobs
+
+Submit three low-priority jobs, one per MIG profile.
+This saturates all MIG capacity on GPU 0.
+
+Review `workloads/job-mig-fill-low.yaml` before applying.
+The file contains three Jobs; here is one representative Job:
+
+[source,yaml]
+----
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mig-fill-3g-20gb                              # <1>
+  namespace: training-jobs
+  labels:
+    kueue.x-k8s.io/queue-name: mig-training-queue
+    kueue.x-k8s.io/priority-class: low-priority       # <2>
+spec:
+  suspend: true
+  template:
+    metadata:
+      annotations:
+        run.ai/simulated-gpu-utilization: "70-90"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: mig-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        command: ["/bin/bash", "-c"]
+        args: [...]
+        resources:
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+            nvidia.com/mig-3g.20gb: "1"                # <3>
+          limits:
+            nvidia.com/mig-3g.20gb: "1"
+----
+<1> Each fill job is named after the MIG profile it occupies.
+<2> `low-priority` (value 100) -- these jobs will be preempted when a higher-priority job arrives requesting the same MIG profile.
+<3> Requests the `3g.20gb` MIG slice. The other two Jobs in the file request `mig-2g.10gb` and `mig-1g.5gb` respectively.
+
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/job-mig-fill-low.yaml**
+job.batch/mig-fill-3g-20gb created
+job.batch/mig-fill-2g-10gb created
+job.batch/mig-fill-1g-5gb created
+----
+
+This creates:
+
+[cols="2,2,1,1,2", options="header"]
+|===
+|Job |MIG Resource |Priority |Value |Expected Behavior
+
+|`mig-fill-3g-20gb`
+|`nvidia.com/mig-3g.20gb: 1`
+|`low-priority`
+|100
+|Admitted -- fills 3g.20gb slot
+
+|`mig-fill-2g-10gb`
+|`nvidia.com/mig-2g.10gb: 1`
+|`low-priority`
+|100
+|Admitted -- fills 2g.10gb slot
+
+|`mig-fill-1g-5gb`
+|`nvidia.com/mig-1g.5gb: 1`
+|`low-priority`
+|100
+|Admitted -- fills 1g.5gb slot
+|===
+
+Wait for all three to be admitted and running:
+
+All three workloads should show ADMITTED:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n training-jobs**
+NAME                         QUEUE                RESERVED IN         ADMITTED   FINISHED   AGE
+job-mig-fill-1g-5gb-b1bc4    mig-training-queue   mig-cluster-queue   True                  18s
+job-mig-fill-2g-10gb-6983f   mig-training-queue   mig-cluster-queue   True                  19s
+job-mig-fill-3g-20gb-7882b   mig-training-queue   mig-cluster-queue   True                  20s
+----
+
+All three pods should be running on the A100 node:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n training-jobs -o wide**
+NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+mig-fill-1g-5gb-jv48s    1/1     Running   0          35s   10.235.0.79   worker-cluster-vnnbf-1   <none>           <none>
+mig-fill-2g-10gb-j7rgq   1/1     Running   0          36s   10.235.0.78   worker-cluster-vnnbf-1   <none>           <none>
+mig-fill-3g-20gb-vll49   1/1     Running   0          37s   10.235.0.77   worker-cluster-vnnbf-1   <none>           <none>
+----
+
+Verify that MIG capacity is fully consumed -- all three should show Total 1:
+
+[source,console,subs="+quotes"]
+----
+$ **oc describe clusterqueue mig-cluster-queue | sed -n '/Flavors Usage:/,/Pending Workloads:/p' | grep -A 1 "nvidia.com/mig"**
+      Name:             nvidia.com/mig-1g.5gb
+      Total:            1
+--
+      Name:             nvidia.com/mig-2g.10gb
+      Total:            1
+--
+      Name:             nvidia.com/mig-3g.20gb
+      Total:            1
+----
+
+All three MIG profiles show `Total: 1` -- no capacity remaining.
+
+=== 2. Submit a high-priority job to trigger preemption
+
+Now submit a high-priority job that requests the same `3g.20gb` MIG slice.
+Since the slot is occupied by a low-priority job and the ClusterQueue has `withinClusterQueue: LowerPriority`, Kueue preempts the low-priority job.
+
+Review `workloads/job-mig-preempt-high.yaml` before applying:
+
+[source,yaml]
+----
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mig-preempt-high-3g                           # <1>
+  namespace: training-jobs
+  labels:
+    kueue.x-k8s.io/queue-name: mig-training-queue
+    kueue.x-k8s.io/priority-class: high-priority      # <2>
+spec:
+  suspend: true
+  template:
+    metadata:
+      annotations:
+        run.ai/simulated-gpu-utilization: "80-95"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: mig-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        command: ["/bin/bash", "-c"]
+        args: [...]
+        resources:
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+            nvidia.com/mig-3g.20gb: "1"                # <3>
+          limits:
+            nvidia.com/mig-3g.20gb: "1"
+----
+<1> The job name indicates it is a high-priority preemption job targeting the `3g` profile.
+<2> `high-priority` (value 1000) -- 10x higher than the `low-priority` jobs filling the slots. This triggers Kueue's `LowerPriority` preemption.
+<3> Requests the same `mig-3g.20gb` resource as `mig-fill-3g-20gb`. Since quota is 1 and the slot is occupied by a lower-priority job, Kueue preempts it.
+
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/job-mig-preempt-high.yaml**
+job.batch/mig-preempt-high-3g created
+----
+
+This creates:
+
+[cols="2,2,1,1,2", options="header"]
+|===
+|Job |MIG Resource |Priority |Value |Expected Behavior
+
+|`mig-preempt-high-3g`
+|`nvidia.com/mig-3g.20gb: 1`
+|`high-priority`
+|1000
+|*Preempts* `mig-fill-3g-20gb`
+|===
+
+=== 3. Verify preemption
+
+a. Confirm the high-priority job replaced the low-priority one:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n training-jobs**
+job-mig-fill-1g-5gb-b1bc4       mig-training-queue   mig-cluster-queue   True                  2m40s
+job-mig-fill-2g-10gb-6983f      mig-training-queue   mig-cluster-queue   True                  2m41s
+job-mig-fill-3g-20gb-7882b      mig-training-queue                       False                 2m42s
+job-mig-preempt-high-3g-42a9f   mig-training-queue   mig-cluster-queue   True                  20s
+----
++
+Expected state:
++
+[cols="2,1,3", options="header"]
+|===
+|Workload |Status |Reason
+
+|`mig-preempt-high-3g`
+|ADMITTED
+|High priority (1000) -- took the 3g.20gb slot
+
+|`mig-fill-3g-20gb`
+|PENDING
+|Preempted -- waiting for 3g.20gb to free up
+
+|`mig-fill-2g-10gb`
+|ADMITTED
+|Unaffected -- different MIG profile
+
+|`mig-fill-1g-5gb`
+|ADMITTED
+|Unaffected -- different MIG profile
+|===
+
+b. Verify only the 3g.20gb slot changed hands:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n training-jobs -o wide**
+NAME                        READY   STATUS    RESTARTS   AGE    IP            NODE                     NOMINATED NODE   READINESS GATES
+mig-fill-1g-5gb-jv48s       1/1     Running   0          3m6s   10.235.0.79   worker-cluster-vnnbf-1   <none>           <none>
+mig-fill-2g-10gb-j7rgq      1/1     Running   0          3m7s   10.235.0.78   worker-cluster-vnnbf-1   <none>           <none>
+mig-preempt-high-3g-8zjlg   1/1     Running   0          46s    10.235.0.80   worker-cluster-vnnbf-1   <none>           <none>
+----
++
+Three pods should be Running (the high-priority `3g` job plus the two unaffected low-priority jobs on `2g` and `1g`).
+The original low-priority `3g` pod should be terminated or absent.
+
+c. Check ClusterQueue usage:
++
+[source,console,subs="+quotes"]
+----
+$ **oc describe clusterqueue mig-cluster-queue | sed -n '/Flavors Usage:/,/Pending Workloads:/p' | grep -A 1 "nvidia.com/mig"**
+      Name:             nvidia.com/mig-1g.5gb
+      Total:            1
+--
+      Name:             nvidia.com/mig-2g.10gb
+      Total:            1
+--
+      Name:             nvidia.com/mig-3g.20gb
+      Total:            1
+----
++
+All three MIG profiles still show `Total: 1` -- the same total capacity is consumed, but the `3g.20gb` slot is now held by the high-priority job instead of the low-priority one.
+
+d. Confirm nvidia-smi from the high-priority job:
++
+[source,console,subs="+quotes"]
+----
+$ **oc logs -n training-jobs job/mig-preempt-high-3g --tail=20**
++------------------------------------------------------------------------------+
+| NVIDIA-SMI 470.129.06   Driver Version: 470.129.06   CUDA Version: 11.4      |
++--------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                |                      |               MIG M. |
++--------------------------------+----------------------+----------------------+
+|   0  NVIDIA-A10..          Off | 00000001:00:00.0 Off |                  Off |
+| N/A   33C    P8    11W /  70W  |      0MiB / 40960MiB |       0%     Default |
+|                                |                      |                  N/A |
++--------------------------------+----------------------+----------------------+
+
++------------------------------------------------------------------------------+
+| Processes:                                                                   |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory  |
+|        ID   ID                                                   Usage       |
++------------------------------------------------------------------------------+
+|    0   N/A  N/A       289      G   /bin/bash-cecho "========..        0MiB   |
++------------------------------------------------------------------------------+
+----
++
+The output should show `NVIDIA-A100-SXM4-40GB`, confirming the pod is on the A100 node using the MIG slice.
++
+TIP: Preemption only affected `mig-fill-3g-20gb` -- the jobs on `2g.10gb` and `1g.5gb` were untouched because there was no contention on those profiles.
+Kueue preempts the minimum number of workloads needed to admit the incoming high-priority job.
+
+e. Wait for the high-priority job to complete.
++
+After 5 minutes, `mig-preempt-high-3g` finishes and releases the `3g.20gb` slot.
+Kueue automatically re-admits `mig-fill-3g-20gb`:
++
+Watch the low-priority job get re-admitted:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n training-jobs**
+NAME                            QUEUE                RESERVED IN         ADMITTED   FINISHED   AGE
+job-mig-fill-1g-5gb-b1bc4       mig-training-queue   mig-cluster-queue   True       True       8m51s
+job-mig-fill-2g-10gb-6983f      mig-training-queue   mig-cluster-queue   True       True       8m52s
+**job-mig-fill-3g-20gb-7882b      mig-training-queue   mig-cluster-queue   True                  8m53s**
+job-mig-preempt-high-3g-42a9f   mig-training-queue   mig-cluster-queue   True       True       6m31s
+----
++
+The low-priority 3g pod should start running again:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n training-jobs -o wide**
+NAME                        READY   STATUS      RESTARTS   AGE     IP            NODE                     NOMINATED NODE   READINESS GATES
+mig-fill-1g-5gb-jv48s       0/1     Completed   0          9m24s   10.235.0.79   worker-cluster-vnnbf-1   <none>           <none>
+mig-fill-2g-10gb-j7rgq      0/1     Completed   0          9m25s   10.235.0.78   worker-cluster-vnnbf-1   <none>           <none>
+mig-fill-3g-20gb-2chwf      1/1     Running     0          85s     10.235.0.81   worker-cluster-vnnbf-1   <none>           <none>
+mig-preempt-high-3g-8zjlg   0/1     Completed   0          7m4s    10.235.0.80   worker-cluster-vnnbf-1   <none>           <none>
+----
++
+This demonstrates the full lifecycle: preemption -> high-priority execution -> automatic re-admission of the preempted job.
+
+=== Clean Up
+
+[source,console,subs="+quotes"]
+----
+$ **oc delete jobs -n training-jobs mig-fill-3g-20gb mig-fill-2g-10gb mig-fill-1g-5gb mig-preempt-high-3g**
+job.batch "mig-fill-3g-20gb" deleted from training-jobs namespace
+job.batch "mig-fill-2g-10gb" deleted from training-jobs namespace
+job.batch "mig-fill-1g-5gb" deleted from training-jobs namespace
+job.batch "mig-preempt-high-3g" deleted from training-jobs namespace
+----
+
+== MIG Preemption Summary
+
+[cols="2,3,1", options="header"]
+|===
+|File |Resources |Scope
+
+|`job-mig-fill-low.yaml`
+|3 low-priority MIG jobs (one per profile)
+|Namespace
+
+|`job-mig-preempt-high.yaml`
+|1 high-priority job targeting `3g.20gb`
+|Namespace
+|===
+
+.MIG Preemption in Production
+[sidebar]
+****
+In a production cluster with multiple MIG-partitioned GPUs, the preemption behavior scales naturally.
+Each MIG profile is a separate Kubernetes extended resource, so Kueue tracks contention per-profile independently.
+A high-priority job requesting `mig-3g.20gb` only preempts other jobs using `mig-3g.20gb` -- jobs on smaller profiles are unaffected.
+This makes MIG especially useful for mixed workloads where different teams need different GPU sizes.
+****

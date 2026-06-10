@@ -1,0 +1,202 @@
+= Training Jobs -- Priority-Based Admission
+:navtitle: Priority Jobs
+
+In this exercise, you submit three training Jobs with different WorkloadPriorityClasses.
+The Jobs are deliberately declared in low, medium, high order in the YAML file to prove that Kueue admits by priority value, not by declaration order.
+
+== Concepts
+
+When workloads carry a `kueue.x-k8s.io/priority-class` label, Kueue uses the WorkloadPriorityClass value to determine admission order.
+Higher values are admitted first, regardless of when they were submitted.
+
+In this exercise, each Job requests 2 GPUs.
+With 4 A100 GPUs available:
+
+* `high-priority` (2 GPUs) + `medium-priority` (2 GPUs) = 4 GPUs -- fills all capacity
+* `low-priority` (2 GPUs) must wait -- no capacity left
+
+This demonstrates that Kueue uses priority, not FIFO, when WorkloadPriorityClasses are present.
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/workload_priority_class/[Kueue: WorkloadPriorityClass^]
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#preemption[Kueue: Preemption^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#running-kueue-jobs[Red Hat build of Kueue: Running Jobs with Quota Limits^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-quotas[Red Hat build of Kueue: Configuring Quotas^]
+
+== Lab: Submit Priority-Based Training Jobs
+
+=== 1. Submit training jobs (priority-based admission)
+
+a. Review `workloads/job-with-priority.yaml` before applying.
+Only the first Job is shown here -- the other two (`training-job-medium-wpc`, `training-job-high-wpc`) follow the same structure with different priority classes:
++
+[source,yaml]
+----
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: training-job-low-wpc
+  namespace: training-jobs
+  labels:
+    kueue.x-k8s.io/queue-name: training-queue
+    kueue.x-k8s.io/priority-class: low-priority   <1>
+spec:
+  suspend: true
+  template:
+    metadata:
+      annotations:
+        run.ai/simulated-gpu-utilization: "40-60"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: training-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          echo "=== Job: training-job-low-wpc (low-priority: 100) ==="
+          ...
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+            nvidia.com/gpu: "2"                    <2>
+          limits:
+            nvidia.com/gpu: "2"
+----
+<1> The `priority-class` label references the WorkloadPriorityClass you created in xref:kueue-config:priority-classes.adoc#create-priority-classes[Create WorkloadPriorityClasses]. Each Job uses a different priority: `low-priority` (100), `medium-priority` (500), `high-priority` (1000). Kueue admits higher values first, regardless of declaration order in the YAML file.
+<2> Each Job requests 2 GPUs (unlike the FIFO exercise which requested 1). With 4 A100 GPUs total, only 2 of the 3 Jobs can run simultaneously -- this forces contention so you can observe priority-based admission.
++
+The Jobs are deliberately declared in low, medium, high order in the YAML to prove that Kueue reorders admission by priority value.
+
+b. Apply the workloads:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/job-with-priority.yaml**
+job.batch/training-job-low-wpc created
+job.batch/training-job-medium-wpc created
+job.batch/training-job-high-wpc created
+----
++
+This creates:
++
+[cols="2,1,1,1,3", options="header"]
+|===
+|Job |GPUs |Priority |Value |Expected Behavior
+
+|`training-job-low-wpc`
+|2
+|`low-priority`
+|100
+|Waits -- no capacity left
+
+|`training-job-medium-wpc`
+|2
+|`medium-priority`
+|500
+|Admitted (fills remaining 2 GPUs)
+
+|`training-job-high-wpc`
+|2
+|`high-priority`
+|1000
+|Admitted first (highest priority)
+|===
++
+With 4 whole GPUs available, `high-priority` (2 GPUs) and `medium-priority` (2 GPUs) consume all capacity.
+The `low-priority` job must wait.
+
+c. Verify that high and medium are admitted, low is pending:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n training-jobs**
+NAME                                QUEUE            RESERVED IN          ADMITTED   FINISHED   AGE
+job-training-job-high-wpc-b6b53     training-queue   a100-cluster-queue   True                  24s
+job-training-job-low-wpc-7e150      training-queue                        False                 26s
+job-training-job-medium-wpc-08828   training-queue   a100-cluster-queue   True                  25s
+----
+
+d. Check that only high and medium pods are running:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n training-jobs -o wide**
+NAME                            READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+training-job-high-wpc-z68jj     1/1     Running   0          40s   10.235.0.49   worker-cluster-vnnbf-1   <none>           <none>
+training-job-medium-wpc-4c2hd   1/1     Running   0          41s   10.235.0.48   worker-cluster-vnnbf-1   <none>           <none>
+----
+
+e. Check queue status -- 1 pending, 2 admitted:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get localqueues -A -o wide**
+NAMESPACE        NAME              CLUSTERQUEUE         PENDING WORKLOADS   ADMITTED WORKLOADS
+inference-apps   default           default              0                   0
+inference-apps   inference-queue   t4-cluster-queue     0                   0
+training-jobs    default           default              0                   0
+training-jobs    training-queue    a100-cluster-queue   1                   2
+
+$ **oc get clusterqueues -A -o wide**
+NAME                 COHORT   STRATEGY         PENDING WORKLOADS   ADMITTED WORKLOADS
+a100-cluster-queue            BestEffortFIFO   1                   2
+default                       BestEffortFIFO   0                   0
+t4-cluster-queue              BestEffortFIFO   0                   0
+----
++
+TIP: Even though `training-job-low-wpc` was declared first in the YAML, Kueue admitted `training-job-high-wpc` and `training-job-medium-wpc` first because they have higher WorkloadPriorityClass values.
+*Priority trumps declaration order.*
+This is one of Kueue's key advantages over basic Kubernetes scheduling -- it can reorder the admission queue based on business priority.
+
+f. When the high-priority job completes (after 5 minutes), the low-priority job is admitted automatically as capacity frees up:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n training-jobs**
+NAME                                QUEUE            RESERVED IN          ADMITTED   FINISHED   AGE
+job-training-job-high-wpc-b6b53     training-queue   a100-cluster-queue   True       True       5m43s
+*job-training-job-low-wpc-7e150      training-queue   a100-cluster-queue   True*                  5m45s
+job-training-job-medium-wpc-08828   training-queue   a100-cluster-queue   True       True       5m44s
+
+$ **oc get pods -n training-jobs -o wide**
+NAME                            READY   STATUS      RESTARTS   AGE     IP            NODE                     NOMINATED NODE   READINESS GATES
+training-job-high-wpc-z68jj     0/1     Completed   0          6m44s   10.235.0.49   worker-cluster-vnnbf-1   <none>           <none>
+training-job-low-wpc-j4t76      1/1     Running     0          97s     10.235.0.50   worker-cluster-vnnbf-1   <none>           <none>
+training-job-medium-wpc-4c2hd   0/1     Completed   0          6m45s   10.235.0.48   worker-cluster-vnnbf-1   <none>           <none>
+
+$ **oc get localqueues -A -o wide**
+NAMESPACE        NAME              CLUSTERQUEUE         PENDING WORKLOADS   ADMITTED WORKLOADS
+inference-apps   default           default              0                   0
+inference-apps   inference-queue   t4-cluster-queue     0                   0
+training-jobs    default           default              0                   0
+training-jobs    training-queue    a100-cluster-queue   0                   1
+
+$ **oc get clusterqueues -A -o wide**
+NAME                 COHORT   STRATEGY         PENDING WORKLOADS   ADMITTED WORKLOADS
+a100-cluster-queue            BestEffortFIFO   0                   1
+default                       BestEffortFIFO   0                   0
+t4-cluster-queue              BestEffortFIFO   0                   0
+----
++
+.How does the Low-Priority Job Get Admitted?
+[sidebar]
+****
+After the `high-priority` or `medium-priority` job completes and releases 2 GPUs, Kueue automatically re-evaluates the pending queue.
+The `low-priority` job is the only workload waiting, and 2 GPUs are now available, so Kueue admits it immediately.
+
+This is *automatic* -- you do not need to resubmit or manually intervene.
+Kueue continuously watches for capacity changes and admits pending workloads as resources free up.
+****
+
+g. Clean up:
++
+[source,console,subs="+quotes"]
+----
+$ **oc delete jobs -n training-jobs training-job-low-wpc training-job-medium-wpc training-job-high-wpc**
+job.batch "training-job-low-wpc" deleted from training-jobs namespace
+job.batch "training-job-medium-wpc" deleted from training-jobs namespace
+job.batch "training-job-high-wpc" deleted from training-jobs namespace
+----

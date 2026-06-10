@@ -1,0 +1,83 @@
+= Fix the mig-faker DaemonSet
+:navtitle: mig-faker Fix
+
+The fake GPU operator has a bug in the Helm chart (v0.0.80): the `mig-faker` DaemonSet is missing a toleration for the `nvidia.com/gpu` taint that exists on GPU nodes.
+The `device-plugin` DaemonSet correctly tolerates this taint, but the `mig-faker` does not.
+Without this fix, the mig-faker pod cannot schedule and MIG annotations will be silently ignored.
+The patch only needs to be applied once per cluster -- it survives pod restarts but not Helm re-installs.
+
+== References
+
+* https://github.com/run-ai/fake-gpu-operator[Fake GPU Operator^]
+
+== Lab: Pre-flight Check and mig-faker Fix
+
+=== 1. Verify the fake GPU operator is installed
+
+Before starting the MIG labs, confirm that the fake GPU operator Helm release is deployed in the `gpu-operator` namespace:
+
+[source,console,subs="+quotes"]
+----
+$ **helm list -n gpu-operator**
+NAME            NAMESPACE       REVISION    UPDATED                                 STATUS      CHART                        APP VERSION
+gpu-operator    gpu-operator    1           2026-06-08 10:47:55.257852 +0530 IST    deployed    fake-gpu-operator-0.0.80     0.0.80
+----
+
+[WARNING]
+====
+If the `gpu-operator` release does not appear, the fake GPU operator is not installed.
+Go back to the lab environment setup chapter and install it before continuing.
+Running `helm list` without `-n gpu-operator` will not show it, because the release lives in the `gpu-operator` namespace.
+====
+
+=== 2. Patch the mig-faker DaemonSet
+
+a. Check the current state of the mig-faker DaemonSet:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get daemonset mig-faker -n gpu-operator**
+NAME        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                                    AGE
+mig-faker   0         0         0       0            0           node-role.kubernetes.io/runai-dynamic-mig=true   25h
+----
++
+`DESIRED` shows `0` for two reasons: the toleration is missing, and the A100 node does not yet have the `runai-dynamic-mig` label that the DaemonSet's node selector requires.
+
+b. Add the toleration:
++
+[source,console,subs="+quotes"]
+----
+$ **oc patch daemonset mig-faker -n gpu-operator --type=json** \
+  **-p '[{"op":"add","path":"/spec/template/spec/tolerations","value":[{"key":"nvidia.com/gpu","operator":"Exists","effect":"NoSchedule"}]}]'**
+daemonset.apps/mig-faker patched
+----
+
+c. Label the A100 node so the DaemonSet's node selector matches:
++
+[IMPORTANT]
+====
+Before running this command, you must have exported the `WORKER_NODE1` and `WORKER_NODE2` environment variables with the names of your worker nodes.
+These variables were set in the lab environment setup chapter.
+If they are not set, run `oc get nodes -l nvidia.com/gpu.product` to find your node names and export them:
+
+[source,console,subs="+quotes"]
+----
+$ **export WORKER_NODE1=<your-a100-node-name>**
+$ **export WORKER_NODE2=<your-t4-node-name>**
+----
+====
++
+[source,console,subs="+quotes"]
+----
+$ **oc label node $WORKER_NODE1 node-role.kubernetes.io/runai-dynamic-mig=true**
+node/worker-cluster-vnnbf-1 labeled
+----
+
+d. Verify the fix -- `DESIRED` and `READY` should both show `1` after the mig-faker pod starts on the A100 node:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get daemonset mig-faker -n gpu-operator**
+NAME        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                                    AGE
+mig-faker   1         1         1       1            1           node-role.kubernetes.io/runai-dynamic-mig=true   25h
+----

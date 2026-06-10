@@ -1,0 +1,209 @@
+= Verify Fake GPUs
+:navtitle: Verify Fake GPUs
+
+With the Fake GPU Operator installed, you now verify that the simulated GPUs appear as allocatable resources on the worker nodes.
+Then you deploy test pods that run `nvidia-smi` to confirm the simulated GPU hardware is visible inside containers.
+
+== References
+
+* https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#extended-resources[Kubernetes: Extended Resources^]
+* https://docs.nvidia.com/deploy/nvidia-smi/index.html[NVIDIA: nvidia-smi Documentation^]
+* https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/#create-a-pod-that-gets-scheduled-to-your-chosen-node[Kubernetes: Assign Pods to Nodes with nodeSelector^]
+
+== Lab: Verify GPU Resources and Test Pods
+
+=== 1. Verify fake GPUs on nodes
+
+Wait about a minute for the operator pods to start, then verify:
+
+a. Check that the operator pods are running:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n gpu-operator**
+NAME                                       READY   STATUS    RESTARTS   AGE
+device-plugin-cpthp                        1/1     Running   0          2m4s
+device-plugin-s7xxk                        1/1     Running   0          2m4s
+nvidia-dcgm-exporter-9fn5f                 1/1     Running   0          2m4s
+nvidia-dcgm-exporter-kwok-b8fd4976-d55xl   1/1     Running   0          2m9s
+nvidia-dcgm-exporter-q7wfx                 1/1     Running   0          2m4s
+status-updater-549984dff-xhcpc             1/1     Running   0          2m9s
+topology-server-9d57b6c79-bzs7k            1/1     Running   0          2m9s
+----
+
+b. Verify worker-1 has 4 A100 GPUs:
++
+[source,console,subs="+quotes"]
+----
+$ **oc describe node $WORKER_NODE1 | grep -A 10 "nvidia.com/gpu.count"**
+
+**nvidia.com/gpu.count=4**
+nvidia.com/gpu.deploy.compute-domain-dra-plugin=true
+nvidia.com/gpu.deploy.dcgm-exporter=true
+nvidia.com/gpu.deploy.device-plugin=true
+nvidia.com/gpu.deploy.dra-plugin-gpu=true
+**nvidia.com/gpu.memory=40960**
+nvidia.com/gpu.present=true
+**nvidia.com/gpu.product=NVIDIA-A100-SXM4-40GB**
+nvidia.com/mig.strategy=mixed
+run.ai/fake.gpu=true
+----
+
+c. Verify worker-2 has 2 T4 GPUs:
++
+[source,console,subs="+quotes"]
+----
+$ **oc describe node $WORKER_NODE2 | grep -A 10 "nvidia.com/gpu.count"**
+
+**nvidia.com/gpu.count=2**
+nvidia.com/gpu.deploy.compute-domain-dra-plugin=true
+nvidia.com/gpu.deploy.dcgm-exporter=true
+nvidia.com/gpu.deploy.device-plugin=true
+nvidia.com/gpu.deploy.dra-plugin-gpu=true
+**nvidia.com/gpu.memory=16384**
+nvidia.com/gpu.present=true
+**nvidia.com/gpu.product=NVIDIA-T4**
+nvidia.com/mig.strategy=mixed
+run.ai/fake.gpu=true
+run.ai/simulated-gpu-node-pool=t4-pool
+----
++
+NOTE: If the GPU counts do not appear, the device plugin pods may not have started yet.
+Check `oc get pods -n gpu-operator` and wait for all pods to reach `Running` status.
+See xref:troubleshooting.adoc[Troubleshooting] if the counts remain at zero.
+
+=== 2. Deploy test pods with nvidia-smi
+
+a. Deploy two pods that each request a GPU -- one targeting the A100 node, one targeting the T4 node:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/pod-gpu-test.yaml**
+pod/gpu-test-a100 created
+pod/gpu-test-t4 created
+----
++
+This creates:
++
+[cols="1,2,2,2", options="header"]
+|===
+|Pod |Node Pool |Fake GPU |Simulated Utilization
+
+|`gpu-test-a100`
+|`a100-pool` (worker-1)
+|1x A100 (40 GiB)
+|60-90% (training pattern)
+
+|`gpu-test-t4`
+|`t4-pool` (worker-2)
+|1x T4 (16 GiB)
+|10-30% (inference pattern)
+|===
++
+Each pod has two scheduling controls:
++
+* *`nodeSelector`* -- targets the specific GPU pool (A100 or T4)
+* *`tolerations`* -- allows the pod to run on tainted GPU nodes
++
+WARNING: Without the toleration, the pod stays Pending even though it requests `nvidia.com/gpu`.
+This mirrors real-world GPU clusters where only GPU workloads are permitted on GPU nodes.
++
+The utilization annotations simulate different workload patterns -- heavy usage (60-90%) for training on the A100, light usage (10-30%) for inference on the T4.
+
+b. Verify each pod landed on the correct node:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods gpu-test-a100 gpu-test-t4 -o wide**
+NAME            READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+gpu-test-a100   1/1     Running   0          25s   10.235.0.43   worker-cluster-vnnbf-1   <none>           <none>
+gpu-test-t4     1/1     Running   0          25s   10.232.2.41   worker-cluster-vnnbf-2   <none>           <none>
+----
+
+c. Run `nvidia-smi` on the A100 pod -- should show NVIDIA A100-SXM4-40GB with 40960 MiB:
++
+[source,console,subs="+quotes"]
+----
+$ **oc exec gpu-test-a100 -- nvidia-smi**
+Mon Jun  8 05:39:53 2026
++------------------------------------------------------------------------------+
+| NVIDIA-SMI 470.129.06   Driver Version: 470.129.06   CUDA Version: 11.4      |
++--------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                |                      |               MIG M. |
++--------------------------------+----------------------+----------------------+
+|   **0  NVIDIA-A10..**          Off | 00000001:00:00.0 Off |                  Off |
+| N/A   33C    P8    11W /  70W  |  **40960MiB / 40960MiB** |      63%     Default |
+|                                |                      |                  N/A |
++--------------------------------+----------------------+----------------------+
+
++------------------------------------------------------------------------------+
+| Processes:                                                                   |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory  |
+|        ID   ID                                                   Usage       |
++------------------------------------------------------------------------------+
+|    0   N/A  N/A       2        G   /usr/bin/coreutils--coreut..    40960MiB  |
++------------------------------------------------------------------------------+
+----
+
+d. Run `nvidia-smi` on the T4 pod -- should show NVIDIA T4 with 16384 MiB:
++
+[source,console,subs="+quotes"]
+----
+$ **oc exec gpu-test-t4 -- nvidia-smi**
+Mon Jun  8 05:40:18 2026
++------------------------------------------------------------------------------+
+| NVIDIA-SMI 470.129.06   Driver Version: 470.129.06   CUDA Version: 11.4      |
++--------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                |                      |               MIG M. |
++--------------------------------+----------------------+----------------------+
+|   **0  NVIDIA-T4**             Off | 00000001:00:00.0 Off |                  Off |
+| N/A   33C    P8    11W /  70W  |  **16384MiB / 16384MiB** |      13%     Default |
+|                                |                      |                  N/A |
++--------------------------------+----------------------+----------------------+
+
++------------------------------------------------------------------------------+
+| Processes:                                                                   |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory  |
+|        ID   ID                                                   Usage       |
++------------------------------------------------------------------------------+
+|    0   N/A  N/A       2        G   /usr/bin/coreutils--coreut..    16384MiB  |
++------------------------------------------------------------------------------+
+----
++
+Compare the two outputs -- different GPU models, different memory sizes, different utilization levels.
++
+TIP: The `nvidia-smi` output from the Fake GPU Operator looks identical to real hardware output.
+This is intentional -- the operator provides a fake `nvidia-smi` binary that reports the simulated GPU model, memory, and utilization configured in the values file.
+
+e. Clean up the test pods:
++
+[source,console,subs="+quotes"]
+----
+$ **oc delete pod gpu-test-a100 gpu-test-t4**
+pod "gpu-test-a100" deleted from default namespace
+pod "gpu-test-t4" deleted from default namespace
+----
+
+== Summary
+
+You have verified that:
+
+* Worker-1 reports *4x nvidia.com/gpu* (A100 pool)
+* Worker-2 reports *2x nvidia.com/gpu* (T4 pool)
+* Test pods land on the correct nodes based on `nodeSelector`
+* `nvidia-smi` inside containers shows the correct GPU model and memory
+* Taints and tolerations correctly control pod placement
+
+.How the Fake GPU Operator Simulates nvidia-smi
+[sidebar]
+****
+The operator's device-plugin DaemonSet mounts a fake `nvidia-smi` binary into each GPU container.
+This binary reads the GPU topology from a ConfigMap in the `gpu-operator` namespace and returns output that matches the configured GPU model, memory size, and simulated utilization.
+
+The status-updater component periodically updates the simulated utilization values based on annotations on each pod (`run.ai/simulated-gpu-utilization`).
+This is why different pods show different utilization percentages -- each pod's annotation controls what `nvidia-smi` reports.
+****

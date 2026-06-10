@@ -1,0 +1,172 @@
+= Training Jobs -- FIFO Admission
+:navtitle: FIFO Jobs
+
+In this exercise, you submit three training Jobs with no WorkloadPriorityClass.
+Without priority, Kueue admits workloads in submission order -- first-in, first-out (FIFO).
+
+== Concepts
+
+When no WorkloadPriorityClass is set on a workload, Kueue uses FIFO ordering within the ClusterQueue.
+The first workload to arrive is the first to be admitted, as long as there is sufficient quota.
+
+In this exercise, each Job requests 1 GPU.
+With 4 A100 GPUs available and only 3 GPUs requested in total, all three Jobs are admitted immediately -- there is no contention.
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#queueing-strategy[Kueue: Queueing Strategy^]
+* https://kueue.sigs.k8s.io/docs/concepts/workload/[Kueue: Workload Lifecycle^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#running-kueue-jobs[Red Hat build of Kueue: Running Jobs with Quota Limits^]
+
+== Lab: Submit FIFO Training Jobs
+
+=== 1. Submit training jobs (FIFO -- no priority)
+
+a. Review `workloads/job-no-priority.yaml` before applying.
+Only the first Job is shown here -- the other two (`training-job-medium`, `training-job-high`) follow the same structure:
++
+[source,yaml]
+----
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: training-job-low
+  namespace: training-jobs                        <1>
+  labels:
+    kueue.x-k8s.io/queue-name: training-queue     <2>
+spec:
+  suspend: true                                   <3>
+  template:
+    metadata:
+      annotations:
+        run.ai/simulated-gpu-utilization: "40-60"  <4>
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: training-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          echo "=== Job: training-job-low (no priority) ==="
+          ...
+          nvidia-smi                               <5>
+          sleep 5
+          ...
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+            nvidia.com/gpu: "1"                    <6>
+          limits:
+            nvidia.com/gpu: "1"
+----
+<1> All three Jobs are created in the `training-jobs` namespace, which is labeled `kueue.openshift.io/managed: "true"`.
+<2> The `queue-name` label routes the Job to the `training-queue` LocalQueue, which forwards it to `a100-cluster-queue`.
+<3> `suspend: true` is required for Kueue-managed Jobs. Kueue holds the Job in a suspended state until it is admitted, then sets `suspend: false` to start it.
+<4> The `run.ai/simulated-gpu-utilization` annotation tells the Fake GPU Operator what GPU utilization percentage to report in `nvidia-smi` output.
+<5> Each Job runs `nvidia-smi` every 5 seconds for 5 minutes. The output shows the GPU model name, confirming the pod landed on the correct node.
+<6> Each Job requests 1 GPU. With 3 Jobs requesting 1 GPU each and 4 A100 GPUs available, all three are admitted immediately -- no contention.
++
+None of the Jobs carry a `kueue.x-k8s.io/priority-class` label, so Kueue admits them in FIFO order.
+
+b. Apply the workloads:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/job-no-priority.yaml**
+job.batch/training-job-low created
+job.batch/training-job-medium created
+job.batch/training-job-high created
+----
++
+This creates three Jobs in the `training-jobs` namespace:
++
+[cols="2,1,1,3", options="header"]
+|===
+|Job |GPUs |Priority |Expected Behavior
+
+|`training-job-low`
+|1
+|None (FIFO)
+|Admitted -- order depends on submission
+
+|`training-job-medium`
+|1
+|None (FIFO)
+|Admitted -- order depends on submission
+
+|`training-job-high`
+|1
+|None (FIFO)
+|Admitted -- order depends on submission
+|===
++
+With 3 GPUs requested and 4 available on the A100 node, all three Jobs are admitted immediately.
+
+c. Verify all three workloads are admitted:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n training-jobs**
+NAME                            QUEUE            RESERVED IN          ADMITTED   FINISHED   AGE
+job-training-job-high-9d054     training-queue   a100-cluster-queue   True                  25s
+job-training-job-low-b02e5      training-queue   a100-cluster-queue   True                  27s
+job-training-job-medium-73a9c   training-queue   a100-cluster-queue   True                  26s
+----
+
+d. Check that all three pods are running on the A100 node:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n training-jobs -o wide**
+NAME                        READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+training-job-high-cr2rq     1/1     Running   0          43s   10.235.0.46   worker-cluster-vnnbf-1   <none>           <none>
+training-job-low-gz6j2      1/1     Running   0          45s   10.235.0.44   worker-cluster-vnnbf-1   <none>           <none>
+training-job-medium-wbhrj   1/1     Running   0          44s   10.235.0.45   worker-cluster-vnnbf-1   <none>           <none>
+----
+
+e. Check logs -- each Job prints `nvidia-smi` every 5 seconds for 5 minutes:
++
+[source,console,subs="+quotes"]
+----
+$ **oc logs -n training-jobs job/training-job-low -f**
+=== Job: training-job-low (no priority) ===
+Node: worker-cluster-vnnbf-1
+GPUs requested: 1
+
+--- Mon Jun  8 11:36:16 UTC 2026 ---
+Mon Jun  8 11:36:16 2026
++------------------------------------------------------------------------------+
+| NVIDIA-SMI 470.129.06   Driver Version: 470.129.06   CUDA Version: 11.4      |
++--------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                |                      |               MIG M. |
++--------------------------------+----------------------+----------------------+
+|   0  NVIDIA-A10..          Off | 00000001:00:00.0 Off |                  Off |
+| N/A   33C    P8    11W /  70W  |  40960MiB / 40960MiB |       0%     Default |
+|                                |                      |                  N/A |
++--------------------------------+----------------------+----------------------+
+----
++
+Each Job runs for 5 minutes, printing `nvidia-smi` output every 5 seconds.
+The output shows the `NVIDIA A100` GPU product name, confirming the pods landed on `worker-1`.
++
+Press `Ctrl+C` to exit the log viewer.
++
+TIP: Use `oc get pods -n training-jobs -o wide` to see the NODE column.
+All three pods should be on the A100 worker node, confirming that the ResourceFlavor's `nodeLabels` and `tolerations` are being injected correctly.
+
+f. Clean up before the next exercise:
++
+[source,console,subs="+quotes"]
+----
+$ **oc delete jobs -n training-jobs training-job-low training-job-medium training-job-high**
+job.batch "training-job-low" deleted from training-jobs namespace
+job.batch "training-job-medium" deleted from training-jobs namespace
+job.batch "training-job-high" deleted from training-jobs namespace
+----
++
+IMPORTANT: Always clean up workloads before starting the next exercise.
+Left-over Jobs consume GPU quota and may cause the next exercise's workloads to remain pending.

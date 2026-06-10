@@ -1,0 +1,225 @@
+= DRS Preemption
+:navtitle: DRS Preemption
+
+Now Team B submits its own jobs.
+Team A has the highest DRS, so Kueue preempts Team A's borrowed workload to make room for Team B.
+
+== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#fair-sharing[Kueue: Fair Sharing^]
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#preemption[Kueue: Preemption^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-fairsharing[Red Hat build of Kueue: Configuring Fair Sharing^]
+
+== Lab: Submit Team B Jobs and Verify Fair Distribution
+
+=== 1. Submit Team B jobs (observe DRS preemption)
+
+a. Review `workloads/job-fair-sharing-team-b.yaml` before applying.
+The file contains 2 Jobs (`team-b-job-1` and `team-b-job-2`).
+Here is one representative Job:
++
+[source,yaml]
+----
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: team-b-job-1
+  namespace: team-b-jobs                               <1>
+  labels:
+    kueue.x-k8s.io/queue-name: team-b-queue            <2>
+spec:
+  suspend: true
+  template:
+    spec:
+      containers:
+      - name: training-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        resources:
+          requests:
+            nvidia.com/gpu: "1"                        <3>
+          limits:
+            nvidia.com/gpu: "1"
+----
+<1> Team B jobs are in the `team-b-jobs` namespace -- a separate namespace from Team A's `training-jobs`. This is how Kueue isolates team workloads.
+<2> The `queue-name` label routes to `team-b-queue`, which forwards to `team-b-cluster-queue` (weight 2, 1 GPU quota). Team B's GPU is currently lent to Team A.
+<3> Each job requests 1 GPU. When `team-b-job-1` arrives, Kueue compares DRS scores: Team A = 334 (borrowing), Team B = 0 (idle). Team A has the highest DRS, so Kueue preempts Team A's borrowed workload to free a GPU for Team B.
+
+b. Apply the workloads:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/job-fair-sharing-team-b.yaml**
+job.batch/team-b-job-1 created
+job.batch/team-b-job-2 created
+----
++
+[cols="2,1,4", options="header"]
+|===
+|Job |GPUs |Expected Outcome
+
+|`team-b-job-1`
+|1
+|Admitted -- DRS preemption evicts Team A's borrowed job
+
+|`team-b-job-2`
+|1
+|*Pending* -- all 3 GPUs at nominal, no preemption target
+|===
+
+c. Watch the preemption:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n training-jobs**
+NAME                     QUEUE          RESERVED IN            ADMITTED   FINISHED   AGE
+job-team-a-job-1-921f5   team-a-queue   team-a-cluster-queue   True                  2m34s
+job-team-a-job-2-216ea   team-a-queue   team-a-cluster-queue   True                  2m33s
+job-team-a-job-3-cb12a   team-a-queue                          False                 2m32s
+
+$ **oc get workloads -n team-b-jobs**
+NAME                     QUEUE          RESERVED IN            ADMITTED   FINISHED   AGE
+job-team-b-job-1-d7766   team-b-queue   team-b-cluster-queue   True                  49s
+job-team-b-job-2-90cd8   team-b-queue                                                48s
+
+$ **oc get pods -n training-jobs -o wide**
+NAME                 READY   STATUS    RESTARTS   AGE     IP            NODE                     NOMINATED NODE   READINESS GATES
+team-a-job-1-76mlx   1/1     Running   0          3m19s   10.235.0.55   worker-cluster-vnnbf-1   <none>           <none>
+team-a-job-2-zf6vc   1/1     Running   0          3m18s   10.235.0.56   worker-cluster-vnnbf-1   <none>           <none>
+
+$ **oc get pods -n team-b-jobs -o wide**
+NAME                 READY   STATUS    RESTARTS   AGE    IP            NODE                     NOMINATED NODE   READINESS GATES
+team-b-job-1-sjnsx   1/1     Running   0          101s   10.235.0.58   worker-cluster-vnnbf-1   <none>           <none>
+----
+
+[TIP]
+====
+*Here is what happened:*
+
+. Team B's `team-b-job-1` arrived and needed 1 GPU
+. Kueue compared DRS: Team A's `weightedShare` = 334, Team B's = 0
+. Team A has the highest DRS -- one of its jobs is the preemption target (the borrowed workload)
+. `LessThanOrEqualToFinalShare` check passed: Team B's future share <= Team A's future share after eviction
+. One Team A job was preempted, `team-b-job-1` was admitted
+. `team-b-job-2` stays pending -- all 3 GPUs are occupied at nominal (Team A: 2, Team B: 1), no queue is borrowing
+====
+
+[NOTE]
+====
+Kueue does not always preempt the "last" or "borrowing" job by name.
+The preemption target is selected by Kueue's internal algorithm, which considers factors like priority class and workload recency.
+You may see `team-a-job-2` or `team-a-job-3` preempted -- either is correct as long as _one_ Team A job is evicted.
+Check the preemption event for details:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get events -n training-jobs --field-selector reason=Preempted**
+LAST SEEN   TYPE     REASON      OBJECT                            MESSAGE
+5m31s       Normal   Preempted   workload/job-team-a-job-3-cb12a   Preempted to accommodate a workload (UID: faa125ac-8aaa-4455-a2b0-42415bf5e7bd, JobUID: dbc4633e-08e7-4fb4-a932-21b227088033) due to reclamation within the cohort; preemptor path: /fair-sharing-cohort/team-b-cluster-queue; preemptee path: /fair-sharing-cohort/team-a-cluster-queue
+----
+====
+
+=== 2. Verify fair distribution
+
+a. Check the GPU accounting for each queue:
++
+[source,console,subs="+quotes"]
+----
+$ **oc describe clusterqueue team-a-cluster-queue | grep -A 25 "Flavors Usage" | grep -B 1 -A 1 "nvidia.com/gpu"**
+      Borrowed:         0
+      Name:             nvidia.com/gpu
+      **Total:            2**
+
+$ **oc describe clusterqueue team-b-cluster-queue | grep -A 25 "Flavors Usage" | grep -B 1 -A 1 "nvidia.com/gpu"**
+      Borrowed:         0
+      Name:             nvidia.com/gpu
+      **Total:            1**
+----
++
+Team A dropped from 3 GPUs to 2 (its nominal quota).
+Team B now has its own 1 GPU back.
+Neither queue is borrowing (`Borrowed: 0`).
+
+b. Verify pod placement:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n training-jobs -o wide**
+NAME                 READY   STATUS    RESTARTS   AGE     IP            NODE                     NOMINATED NODE   READINESS GATES
+team-a-job-1-76mlx   1/1     Running   0          3m19s   10.235.0.55   worker-cluster-vnnbf-1   <none>           <none>
+team-a-job-2-zf6vc   1/1     Running   0          3m18s   10.235.0.56   worker-cluster-vnnbf-1   <none>           <none>
+
+$ **oc get pods -n team-b-jobs -o wide**
+NAME                 READY   STATUS    RESTARTS   AGE    IP            NODE                     NOMINATED NODE   READINESS GATES
+team-b-job-1-sjnsx   1/1     Running   0          101s   10.235.0.58   worker-cluster-vnnbf-1   <none>           <none>
+----
+
+c. Check the DRS after rebalancing:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueue team-a-cluster-queue -o jsonpath='{.status.fairSharing}' | python3 -m json.tool**
+{
+    "weightedShare": 0
+}
+$ **oc get clusterqueue team-b-cluster-queue -o jsonpath='{.status.fairSharing}' | python3 -m json.tool**
+{
+    "weightedShare": 0
+}
+----
++
+Both `weightedShare` values are now *0* -- each team is at its nominal quota, nobody is borrowing.
++
+Expected distribution:
++
+* *Team A*: 2 running jobs (using its own 2 GPU quota)
+* *Team B*: 1 running job (using its own 1 GPU quota)
+* *Total*: 3 GPUs -- full cluster utilization with proportional distribution
+
+=== 3. Clean up DRS fair sharing resources
+
+Clean up the DRS fair sharing jobs and queues before moving to the next section.
+The admission fair sharing exercise uses a different ClusterQueue and LocalQueues.
+
+a. Delete all running jobs and queues:
++
+[source,console,subs="+quotes"]
+----
+$ **oc delete jobs --all -n training-jobs**
+job.batch "team-a-job-1" deleted from training-jobs namespace
+job.batch "team-a-job-2" deleted from training-jobs namespace
+job.batch "team-a-job-3" deleted from training-jobs namespace
+
+$ **oc delete jobs --all -n team-b-jobs**
+job.batch "team-b-job-1" deleted from team-b-jobs namespace
+job.batch "team-b-job-2" deleted from team-b-jobs namespace
+
+$ **oc delete localqueue team-a-queue -n training-jobs**
+localqueue.kueue.x-k8s.io "team-a-queue" deleted from training-jobs namespace
+
+$ **oc delete localqueue team-b-queue -n team-b-jobs**
+localqueue.kueue.x-k8s.io "team-b-queue" deleted from team-b-jobs namespace
+
+$ **oc delete clusterqueue team-a-cluster-queue team-b-cluster-queue**
+clusterqueue.kueue.x-k8s.io "team-a-cluster-queue" deleted
+clusterqueue.kueue.x-k8s.io "team-b-cluster-queue" deleted
+
+$ **oc delete namespace team-b-jobs**
+namespace "team-b-jobs" deleted
+----
+
+b. Verify clean state:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueues**
+NAME                 COHORT   PENDING WORKLOADS
+a100-cluster-queue            0
+default                       0
+t4-cluster-queue              0
+
+$ **oc get pods -n training-jobs --no-headers**
+No resources found in training-jobs namespace.
+----
++
+Only the original isolated ClusterQueues remain.
+No pods are running in `training-jobs`.

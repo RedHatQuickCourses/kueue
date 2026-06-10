@@ -1,0 +1,103 @@
+= Cluster Reset
+:navtitle: Cluster Reset
+
+This chapter provides a single script that removes *everything* the course installs and restores your RHDP cluster to its day-0 state -- the same state you saw after first provisioning the cluster.
+After running this script, you can start the lab again from xref:platform-setup:index.adoc[Platform Setup^] and see the expected output at every step.
+
+IMPORTANT: If you plan to hibernate or reboot your cluster, you *must* run this script (or at minimum remove the GPU taints) before shutting down.
+GPU taints survive reboots and can cascade to break cluster authentication.
+
+== What the Script Removes
+
+The `scripts/cluster-reset.sh` script performs a teardown in 8 steps:
+
+[cols="1,4", options="header"]
+|===
+|Step |What It Cleans Up
+
+|1. GPU taints
+|Removes `nvidia.com/gpu=present:NoSchedule` from worker nodes. Done first to prevent a cascading failure where ODF CSI nodeplugins can't schedule, which breaks Keycloak, OAuth, and `oc login` on reboot.
+
+|2. Workloads
+|Deletes all Jobs and Deployments in `training-jobs`, `inference-apps`, and `team-b-jobs`.
+
+|3. RBAC bindings
+|Removes the ClusterRoleBinding and RoleBindings created in xref:rbac:index.adoc[Kueue RBAC^].
+
+|4. Kueue resources
+|Deletes all LocalQueues, ClusterQueues, ResourceFlavors, and WorkloadPriorityClasses. Skips cleanly if Kueue CRDs are already gone.
+
+|5. MIG config
+|Removes MIG annotations and labels from worker-1.
+
+|6. Helm uninstall
+|Runs `helm uninstall` for the three Helm releases installed by the course: `kueue`, `gpu-operator`, and `rhoai-operators`. OLM handles the downstream cleanup of CSVs, Subscriptions, and operator namespaces.
+
+|7. GPU labels
+|Removes all GPU-related labels and annotations from worker nodes.
+
+|8. Lab namespaces
+|Deletes `training-jobs`, `inference-apps`, `team-b-jobs`, `gpu-operator`, and `openshift-kueue-operator`.
+|===
+
+[NOTE]
+====
+The script does *not* delete CSVs, Subscriptions, OperatorGroups, or RHOAI namespaces directly.
+Helm uninstall removes the Subscriptions, and OLM handles the rest.
+RHOAI namespaces may take a few minutes to terminate on their own after the script completes.
+====
+
+The script is *idempotent* -- every command uses `--ignore-not-found` or error suppression.
+It is safe to run at any point in the course, even if you only completed xref:kueue-install:index.adoc[Install the Red Hat Build of Kueue^], and safe to run multiple times.
+
+== Running the Script
+
+=== 1. Review the script
+
+Before running, inspect the script to understand what will be removed:
+
+[source,console,subs="+quotes"]
+----
+$ **cat scripts/cluster-reset.sh**
+----
+
+=== 2. Run the script
+
+[WARNING]
+====
+Ensure you are logged in as the `admin` user with cluster administrator role before running this script.
+The script auto-detects worker nodes -- no environment variables required.
+====
+
+[source,console,subs="+quotes"]
+----
+$ **bash scripts/cluster-reset.sh**
+----
+
+The script prints colored status output for each step.
+At the end, it reports a summary:
+
+[source,text]
+----
+━━━ Done ━━━
+Cluster reset complete.
+RHOAI namespaces may take a few minutes to terminate on their own.
+Run 'oc get ns' to check progress.
+----
+
+.Why are GPU taints removed first?
+[sidebar]
+****
+The `nvidia.com/gpu=present:NoSchedule` taint blocks *all* pods without a matching toleration -- including infrastructure components.
+On RHDP clusters, the ODF Ceph CSI nodeplugin DaemonSet does not tolerate this taint.
+If the taint is present when the cluster reboots:
+
+. CSI nodeplugins cannot schedule on worker nodes
+. Pods on worker nodes cannot mount Ceph RBD volumes
+. Keycloak PostgreSQL (which uses Ceph storage) gets stuck in `ContainerCreating`
+. Keycloak crashloops without its database
+. The SSO/OAuth identity provider returns 503
+. `oc login` fails with a 500 Internal Server Error for *all* users
+
+Removing the taints first prevents this cascade entirely.
+****

@@ -1,0 +1,98 @@
+= Platform Setup
+:navtitle: Platform Setup
+
+In this chapter, you install the two foundational components needed before Kueue can manage GPU quotas:
+
+* *Red Hat OpenShift AI (RHOAI) 3.4* and its dependency operators
+* *The Fake GPU Operator* from Run:ai, which simulates NVIDIA GPUs on CPU-only worker nodes
+
+By the end of this chapter, your cluster will have two worker nodes advertising fake GPUs that behave like real NVIDIA hardware from the Kubernetes scheduler's perspective.
+
+== What Gets Installed
+
+=== RHOAI 3.4 and Dependencies
+
+A Helm chart installs the RHOAI operator and its dependencies in a single step.
+The chart also creates a DataScienceCluster CR that activates the platform.
+
+[cols="1,1,1,2", options="header"]
+|===
+|Resource |Channel |Namespace |Purpose
+
+|NFD
+|stable
+|openshift-nfd
+|Hardware feature discovery
+
+|OpenShift Serverless
+|stable
+|openshift-serverless
+|Knative for model serving
+
+|Authorino Operator
+|stable
+|openshift-operators
+|Auth for inference endpoints
+
+|OpenShift Pipelines
+|latest
+|openshift-operators
+|Tekton AI/ML pipelines
+
+|RHOAI
+|stable-3.4
+|redhat-ods-operator
+|OpenShift AI platform
+
+|DataScienceCluster CR
+|--
+|cluster-scoped
+|Activates RHOAI components
+|===
+
+=== Fake GPU Operator
+
+The https://github.com/run-ai/fake-gpu-operator[Fake GPU Operator^] deploys a device plugin that advertises `nvidia.com/gpu` resources to kubelet.
+Pods can request GPUs and get scheduled normally -- without any physical GPU hardware.
+
+[cols="1,1,1,1,1", options="header"]
+|===
+|Node |Pool |Fake GPUs |MIG Capable |Use Case
+
+|worker-1
+|`a100-pool`
+|4x NVIDIA A100 (40 GiB each)
+|Yes
+|Training workloads
+
+|worker-2
+|`t4-pool`
+|2x NVIDIA T4 (16 GiB each)
+|No
+|Inference workloads
+|===
+
+== What Is Deliberately NOT Installed
+
+* *OpenShift Service Mesh 3* -- the OpenShift ingress operator manages this automatically
+* *NVIDIA GPU Operator* -- replaced by the Fake GPU Operator
+* *Kueue* -- installed separately via its own Helm chart (see xref:kueue-install:index.adoc[Install Kueue])
+
+NOTE: The DataScienceCluster CR sets the `kueue` component to `Unmanaged` so that the standalone Kueue operator (installed in the next chapter) can manage it without interference from RHOAI.
+The `codeflare` and `modelmeshserving` components are set to `Removed` (deprecated).
+
+=== References
+
+* https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.4[Red Hat OpenShift AI Documentation^]
+* https://github.com/run-ai/fake-gpu-operator[Run:ai Fake GPU Operator — GitHub^]
+* https://docs.openshift.com/container-platform/4.20/operators/understanding/olm-understanding-operatorhub.html[OpenShift OLM and OperatorHub^]
+* https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/overview.html[NVIDIA GPU Operator Documentation^]
+
+.Why use fake GPUs instead of real hardware?
+[sidebar]
+****
+Real GPU hardware is expensive and scarce in training environments.
+The Fake GPU Operator lets students learn Kueue's scheduling, quota management, MIG partitioning, and fair sharing features on any CPU-only OpenShift cluster.
+The scheduling behavior is identical to real GPUs -- pods request `nvidia.com/gpu`, nodes advertise capacity, and the Kubernetes scheduler places workloads accordingly.
+The only difference is that no actual GPU computation occurs.
+****

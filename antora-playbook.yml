@@ -1,0 +1,18 @@
+site:
+  title: GPU Quota Management with Kueue on Red Hat OpenShift AI
+  start_page: kueue::index.adoc
+
+content:
+  sources:
+    - url: ./
+
+asciidoc:
+  extensions:
+    - '@asciidoctor/tabs'
+  attributes:
+    page-pagination: true
+
+ui:
+  bundle:
+    url: ./ui-bundle/ui-bundle.zip
+  supplemental_files: ./supplemental-ui

@@ -1,0 +1,132 @@
+= Apply Fair Sharing ClusterQueues
+:navtitle: DRS Setup
+
+In this section, you create the team-based ClusterQueues with `fairSharing.weight` and join them into a cohort.
+
+== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#fair-sharing[Kueue: Fair Sharing^]
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#preemption[Kueue: Preemption^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-fairsharing[Red Hat build of Kueue: Configuring Fair Sharing^]
+
+== Lab: Create Fair Sharing Resources
+
+=== 1. Apply fair sharing ClusterQueues
+
+a. Review `kueue-config/10-fair-sharing.yaml` before applying.
+The file creates two ClusterQueues, two LocalQueues, and a namespace.
+Here is the Team A ClusterQueue (the Team B ClusterQueue follows the same structure and is not shown):
++
+[source,yaml]
+----
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: team-a-cluster-queue
+spec:
+  cohortName: fair-sharing-cohort                      <1>
+  preemption:
+    withinClusterQueue: LowerPriority
+    reclaimWithinCohort: Any                           <2>
+  fairSharing:
+    weight: "1"                                        <3>
+  resourceGroups:
+  - coveredResources: ["cpu", "memory", "nvidia.com/gpu"]
+    flavors:
+    - name: a100-gpu
+      resources:
+      - name: nvidia.com/gpu
+        nominalQuota: 2                                <4>
+----
+<1> Both ClusterQueues join the same `fair-sharing-cohort`. This is what makes them share resources and enables DRS comparison.
+<2> `reclaimWithinCohort: Any` is *required* for fair sharing preemption to work. Without it, DRS scores are computed but Kueue never acts on them. This is the most common misconfiguration.
+<3> `fairSharing.weight` controls how much of the cohort this queue is entitled to. Weight 1 means standard entitlement. Team B uses weight 2 (double entitlement), which halves its DRS for the same usage.
+<4> Team A gets 2 of the 3 total A100 GPUs in the cohort. Team B gets the remaining 1 GPU with `nominalQuota: 1`.
+
+b. Apply the configuration:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f kueue-config/10-fair-sharing.yaml**
+namespace/team-b-jobs created
+rolebinding.rbac.authorization.k8s.io/default-sa-scc created
+clusterqueue.kueue.x-k8s.io/team-a-cluster-queue created
+clusterqueue.kueue.x-k8s.io/team-b-cluster-queue created
+localqueue.kueue.x-k8s.io/team-a-queue created
+localqueue.kueue.x-k8s.io/team-b-queue created
+----
++
+This creates:
++
+[cols="1,1,3", options="header"]
+|===
+|Resource |Name |Details
+
+|Namespace
+|`team-b-jobs`
+|With `kueue.openshift.io/managed: "true"` label
+
+|ClusterQueue
+|`team-a-cluster-queue`
+|2 GPUs, `fairSharing.weight: 1`, `reclaimWithinCohort: Any` (research team)
+
+|ClusterQueue
+|`team-b-cluster-queue`
+|1 GPU, `fairSharing.weight: 2`, `reclaimWithinCohort: Any` (production team)
+
+|LocalQueue
+|`team-a-queue`
+|In `training-jobs` -> `team-a-cluster-queue`
+
+|LocalQueue
+|`team-b-queue`
+|In `team-b-jobs` -> `team-b-cluster-queue`
+|===
++
+Both ClusterQueues are in the `fair-sharing-cohort` cohort.
+
+c. Verify:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueues**
+NAME                   COHORT                PENDING WORKLOADS
+a100-cluster-queue                           0
+default                                      0
+t4-cluster-queue                             0
+team-a-cluster-queue   fair-sharing-cohort   0
+team-b-cluster-queue   fair-sharing-cohort   0
+
+$ **oc get clusterqueue team-a-cluster-queue -o jsonpath='{"cohort-name="}{.spec.cohortName}{" weight="}{.spec.fairSharing.weight}{"\n"}'**
+cohort-name=fair-sharing-cohort weight=1
+
+$ **oc get clusterqueue team-b-cluster-queue -o jsonpath='{"cohort-name="}{.spec.cohortName}{" weight="}{.spec.fairSharing.weight}{"\n"}'**
+cohort-name=fair-sharing-cohort weight=2
+----
++
+Both queues should show `cohort-name=fair-sharing-cohort` and their respective weight values (`1` for Team A, `2` for Team B).
+
+NOTE: The fair sharing cohort uses 3 GPUs total (Team A: 2, Team B: 1).
+Since the A100 node has 4 whole GPUs, 1 GPU sits idle -- it is not assigned to any queue in this cohort.
+
+[WARNING]
+====
+`reclaimWithinCohort: Any` is *required* for fair sharing preemption.
+Some upstream Kueue documentation implies that setting `preemptionPolicy: FairSharing` on the Kueue CR is sufficient for cross-queue preemption.
+*It is not.*
+Each ClusterQueue must also have `reclaimWithinCohort: Any` (or `LowerPriority`) in its `preemption` spec.
+Without it, Kueue will _never_ preempt workloads across ClusterQueues -- even with fair sharing enabled.
+The DRS scores will compute correctly, but no preemption action will be taken.
+
+Verify with:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueue team-a-cluster-queue -o jsonpath='{.spec.preemption.reclaimWithinCohort}'**
+----
+
+The output must show `Any`.
+If it shows `Never` or is empty, preemption will silently fail.
+
+This is the single most common reason fair sharing "doesn't work" on first attempt.
+====

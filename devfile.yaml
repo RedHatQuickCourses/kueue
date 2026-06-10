@@ -1,0 +1,30 @@
+schemaVersion: 2.2.0
+metadata:
+  name: kueue-quickcourse
+  version: 1.0.0
+  description: GPU Quota Management with Kueue on Red Hat OpenShift AI — course development workspace
+components:
+  - name: tools
+    container:
+      image: registry.access.redhat.com/ubi9/nodejs-22:latest
+      memoryLimit: 1024Mi
+      mountSources: true
+commands:
+  - id: 0-install
+    exec:
+      label: "0. Install dependencies"
+      component: tools
+      commandLine: npm install
+      workingDir: ${PROJECT_SOURCE}
+  - id: 1-watch
+    exec:
+      label: "1. Watch and rebuild on changes"
+      component: tools
+      commandLine: npm run watch:adoc
+      workingDir: ${PROJECT_SOURCE}
+  - id: 2-serve
+    exec:
+      label: "2. Serve site locally"
+      component: tools
+      commandLine: npm run serve
+      workingDir: ${PROJECT_SOURCE}

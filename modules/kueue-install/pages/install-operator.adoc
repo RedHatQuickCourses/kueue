@@ -1,0 +1,83 @@
+= Install the Kueue Operator
+:navtitle: Install Operator
+
+In this section, you install the Red Hat build of Kueue operator using a Helm chart and wait for it to become ready.
+
+== Concepts
+
+The Helm chart creates three resources that trigger OLM to install the Kueue operator:
+
+[cols="1,2,3", options="header"]
+|===
+|Resource |Name |Purpose
+
+|Namespace
+|`openshift-kueue-operator`
+|Operator home
+
+|OperatorGroup
+|`openshift-kueue-operator`
+|Scopes the operator to its namespace
+
+|Subscription
+|`kueue-operator`
+|OLM subscription to `redhat-operators` catalog, `stable` channel
+|===
+
+The Subscription tells OLM to install the Kueue operator from the Red Hat operator catalog.
+OLM creates an InstallPlan, downloads the operator image, and deploys the controller manager.
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/installation/[Kueue: Installation^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#install-kueue[Red Hat build of Kueue: Installation^]
+* https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.4/html/managing_openshift_ai/managing-workloads-with-kueue[Red Hat OpenShift AI: Managing Workloads with Kueue^]
+* https://docs.openshift.com/container-platform/4.20/operators/understanding/olm/olm-understanding-olm.html[OpenShift: Understanding OLM^]
+
+== Lab: Install and Verify the Operator
+
+=== 1. Install the Kueue operator
+
+[source,console,subs="+quotes"]
+----
+$ **helm install kueue ./helm-charts/kueue**
+NAME: kueue
+LAST DEPLOYED: Mon Jun  8 11:46:03 2026
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+NOTES:
+Kueue operator installation started.
+...
+----
+
+=== 2. Wait for Kueue to reach "Succeeded"
+
+a. Monitor the operator installation:
++
+[source,console,subs="+quotes"]
+----
+$ **watch "oc get csv -n openshift-kueue-operator | grep kueue"**
+----
++
+Wait until the PHASE column shows *Succeeded*.
++
+IMPORTANT: Do not proceed until the Kueue CSV shows `Succeeded`.
+The operator must be fully running before you can patch its configuration in the next step.
+
+b. Verify the controller pod is running:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n openshift-kueue-operator**
+NAME                                        READY   STATUS    RESTARTS   AGE
+kueue-controller-manager-855f79c955-np4vn   1/1     Running   0          26s
+kueue-controller-manager-855f79c955-xnj6b   1/1     Running   0          26s
+openshift-kueue-operator-5b4c49c95c-4pckd   1/1     Running   0          57s
+openshift-kueue-operator-5b4c49c95c-j5kw4   1/1     Running   0          57s
+----
++
+You should see at least one `kueue-controller-manager` pod in `Running` state.
+

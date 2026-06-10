@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 880" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <linearGradient id="nodeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8f0fe"/>
+      <stop offset="100%" stop-color="#c6dafc"/>
+    </linearGradient>
+    <linearGradient id="flavorGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff3e0"/>
+      <stop offset="100%" stop-color="#ffe0b2"/>
+    </linearGradient>
+    <linearGradient id="cqGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8f5e9"/>
+      <stop offset="100%" stop-color="#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="lqGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f3e8fd"/>
+      <stop offset="100%" stop-color="#e1bee7"/>
+    </linearGradient>
+    <linearGradient id="nsGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fce4ec"/>
+      <stop offset="100%" stop-color="#f8bbd0"/>
+    </linearGradient>
+    <linearGradient id="prioGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e0f7fa"/>
+      <stop offset="100%" stop-color="#b2ebf2"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5f6368"/>
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7b1fa2"/>
+    </marker>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="38" text-anchor="middle" font-size="28" font-weight="bold" fill="#202124">Kueue Resource Hierarchy</text>
+  <text x="600" y="66" text-anchor="middle" font-size="18" fill="#5f6368">How workloads flow from namespaces to GPU hardware</text>
+
+  <!-- ==================== ROW 1: Workloads + PriorityClasses ==================== -->
+  <text x="90" y="116" font-size="16" font-weight="bold" fill="#b71c1c" text-anchor="middle">WORKLOADS</text>
+
+  <!-- Training workloads -->
+  <rect x="200" y="92" width="300" height="56" rx="8" fill="url(#nsGrad)" stroke="#c62828" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="350" y="117" text-anchor="middle" font-size="18" font-weight="600" fill="#b71c1c">Training Jobs</text>
+  <text x="350" y="138" text-anchor="middle" font-size="15" fill="#4e342e">GPU batch workloads</text>
+
+  <!-- Inference workloads -->
+  <rect x="620" y="92" width="300" height="56" rx="8" fill="url(#nsGrad)" stroke="#c62828" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="770" y="117" text-anchor="middle" font-size="18" font-weight="600" fill="#b71c1c">Inference Deployments</text>
+  <text x="770" y="138" text-anchor="middle" font-size="15" fill="#4e342e">Long-running model serving</text>
+
+  <!-- Priority classes (right side) -->
+  <rect x="960" y="86" width="220" height="68" rx="8" fill="url(#prioGrad)" stroke="#00695c" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="1070" y="108" text-anchor="middle" font-size="15" font-weight="bold" fill="#004d40">PriorityClasses</text>
+  <rect x="975" y="116" width="62" height="26" rx="4" fill="#b2dfdb" stroke="#00897b" stroke-width="1"/>
+  <text x="1006" y="134" text-anchor="middle" font-size="13" font-weight="600" fill="#004d40">low</text>
+  <rect x="1043" y="116" width="62" height="26" rx="4" fill="#80cbc4" stroke="#00897b" stroke-width="1"/>
+  <text x="1074" y="134" text-anchor="middle" font-size="13" font-weight="600" fill="#004d40">med</text>
+  <rect x="1111" y="116" width="62" height="26" rx="4" fill="#4db6ac" stroke="#00897b" stroke-width="1"/>
+  <text x="1142" y="134" text-anchor="middle" font-size="13" font-weight="600" fill="#ffffff">high</text>
+
+  <!-- Arrows: Workloads → LocalQueues -->
+  <line x1="350" y1="148" x2="350" y2="214" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="770" y1="148" x2="770" y2="214" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="326" y="186" font-size="14" fill="#5f6368" text-anchor="middle">submit to</text>
+  <text x="746" y="186" font-size="14" fill="#5f6368" text-anchor="middle">submit to</text>
+
+  <!-- ==================== ROW 2: LocalQueues + Namespaces ==================== -->
+  <text x="90" y="250" font-size="16" font-weight="bold" fill="#7b1fa2" text-anchor="middle">LOCAL</text>
+  <text x="90" y="270" font-size="16" font-weight="bold" fill="#7b1fa2" text-anchor="middle">QUEUES</text>
+  <text x="90" y="290" font-size="13" fill="#5f6368" text-anchor="middle">(Namespace-scoped)</text>
+
+  <!-- Namespace: training-jobs -->
+  <rect x="175" y="218" width="350" height="118" rx="10" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="192" y="240" font-size="15" font-weight="bold" fill="#c62828">ns: training-jobs</text>
+
+  <!-- training-queue LocalQueue -->
+  <rect x="200" y="250" width="300" height="70" rx="8" fill="url(#lqGrad)" stroke="#7b1fa2" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="350" y="278" text-anchor="middle" font-size="19" font-weight="bold" fill="#4a148c">training-queue</text>
+  <text x="350" y="302" text-anchor="middle" font-size="15" fill="#6a1b9a">&#x2192; a100-cluster-queue</text>
+
+  <!-- Namespace: inference-apps -->
+  <rect x="595" y="218" width="350" height="118" rx="10" fill="none" stroke="#c62828" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="612" y="240" font-size="15" font-weight="bold" fill="#c62828">ns: inference-apps</text>
+
+  <!-- inference-queue LocalQueue -->
+  <rect x="620" y="250" width="300" height="70" rx="8" fill="url(#lqGrad)" stroke="#7b1fa2" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="770" y="278" text-anchor="middle" font-size="19" font-weight="bold" fill="#4a148c">inference-queue</text>
+  <text x="770" y="302" text-anchor="middle" font-size="15" fill="#6a1b9a">&#x2192; t4-cluster-queue</text>
+
+  <!-- Arrows: LocalQueues → ClusterQueues -->
+  <line x1="350" y1="336" x2="350" y2="410" stroke="#7b1fa2" stroke-width="2" marker-end="url(#arrowPurple)"/>
+  <line x1="770" y1="336" x2="770" y2="410" stroke="#7b1fa2" stroke-width="2" marker-end="url(#arrowPurple)"/>
+  <text x="326" y="378" font-size="14" fill="#7b1fa2" text-anchor="middle">forwards to</text>
+  <text x="746" y="378" font-size="14" fill="#7b1fa2" text-anchor="middle">forwards to</text>
+
+  <!-- ==================== ROW 3: ClusterQueues ==================== -->
+  <text x="90" y="446" font-size="16" font-weight="bold" fill="#2e7d32" text-anchor="middle">CLUSTER</text>
+  <text x="90" y="466" font-size="16" font-weight="bold" fill="#2e7d32" text-anchor="middle">QUEUES</text>
+  <text x="90" y="486" font-size="13" fill="#5f6368" text-anchor="middle">(Cluster-scoped)</text>
+
+  <!-- a100-cluster-queue -->
+  <rect x="175" y="414" width="350" height="100" rx="8" fill="url(#cqGrad)" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="350" y="442" text-anchor="middle" font-size="19" font-weight="bold" fill="#1b5e20">a100-cluster-queue</text>
+  <text x="350" y="466" text-anchor="middle" font-size="15" fill="#33691e">GPU: 4  &#x2022;  CPU: 16  &#x2022;  Mem: 64 GiB</text>
+  <text x="350" y="488" text-anchor="middle" font-size="14" fill="#558b2f">Preemption: LowerPriority</text>
+  <text x="350" y="508" text-anchor="middle" font-size="14" fill="#558b2f">Flavor: a100-gpu</text>
+
+  <!-- t4-cluster-queue -->
+  <rect x="595" y="414" width="350" height="100" rx="8" fill="url(#cqGrad)" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="770" y="442" text-anchor="middle" font-size="19" font-weight="bold" fill="#1b5e20">t4-cluster-queue</text>
+  <text x="770" y="466" text-anchor="middle" font-size="15" fill="#33691e">GPU: 2  &#x2022;  CPU: 8  &#x2022;  Mem: 32 GiB</text>
+  <text x="770" y="488" text-anchor="middle" font-size="14" fill="#558b2f">Preemption: LowerPriority</text>
+  <text x="770" y="508" text-anchor="middle" font-size="14" fill="#558b2f">Flavor: t4-gpu</text>
+
+  <!-- Annotation: admission + quota check -->
+  <rect x="960" y="430" width="220" height="68" rx="8" fill="#e8f5e9" stroke="#43a047" stroke-width="1" stroke-dasharray="5,3"/>
+  <text x="1070" y="455" text-anchor="middle" font-size="15" fill="#2e7d32" font-weight="bold">Admission Decision</text>
+  <text x="1070" y="476" text-anchor="middle" font-size="14" fill="#388e3c">Quota check + priority</text>
+  <text x="1070" y="494" text-anchor="middle" font-size="14" fill="#388e3c">ordering happens here</text>
+
+  <!-- Arrows: ClusterQueues → ResourceFlavors -->
+  <line x1="350" y1="514" x2="350" y2="588" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="770" y1="514" x2="770" y2="588" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="326" y="556" font-size="14" fill="#5f6368" text-anchor="middle">uses flavor</text>
+  <text x="746" y="556" font-size="14" fill="#5f6368" text-anchor="middle">uses flavor</text>
+
+  <!-- ==================== ROW 4: ResourceFlavors ==================== -->
+  <text x="90" y="624" font-size="16" font-weight="bold" fill="#e65100" text-anchor="middle">RESOURCE</text>
+  <text x="90" y="644" font-size="16" font-weight="bold" fill="#e65100" text-anchor="middle">FLAVORS</text>
+  <text x="90" y="664" font-size="13" fill="#5f6368" text-anchor="middle">(Cluster-scoped)</text>
+
+  <!-- a100-gpu flavor -->
+  <rect x="175" y="592" width="350" height="86" rx="8" fill="url(#flavorGrad)" stroke="#ef6c00" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="350" y="620" text-anchor="middle" font-size="19" font-weight="bold" fill="#bf360c">a100-gpu</text>
+  <text x="350" y="644" text-anchor="middle" font-size="14" fill="#4e342e">nodeLabel: nvidia.com/gpu.product:</text>
+  <text x="350" y="664" text-anchor="middle" font-size="14" fill="#4e342e">NVIDIA-A100-SXM4-40GB</text>
+
+  <!-- t4-gpu flavor -->
+  <rect x="595" y="592" width="350" height="86" rx="8" fill="url(#flavorGrad)" stroke="#ef6c00" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="770" y="620" text-anchor="middle" font-size="19" font-weight="bold" fill="#bf360c">t4-gpu</text>
+  <text x="770" y="644" text-anchor="middle" font-size="14" fill="#4e342e">nodeLabel: nvidia.com/gpu.product:</text>
+  <text x="770" y="664" text-anchor="middle" font-size="14" fill="#4e342e">NVIDIA-T4</text>
+
+  <!-- Annotation: tolerations -->
+  <rect x="960" y="604" width="220" height="62" rx="8" fill="#fff8e1" stroke="#f9a825" stroke-width="1" stroke-dasharray="5,3"/>
+  <text x="1070" y="628" text-anchor="middle" font-size="15" fill="#f57f17" font-weight="bold">Both flavors inject:</text>
+  <text x="1070" y="648" text-anchor="middle" font-size="13" fill="#795548">nodeSelector + toleration</text>
+  <text x="1070" y="664" text-anchor="middle" font-size="12" fill="#795548">nvidia.com/gpu=present:NoSchedule</text>
+
+  <!-- Arrows: ResourceFlavors → Nodes -->
+  <line x1="350" y1="678" x2="350" y2="756" stroke="#5f6368" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow)"/>
+  <line x1="770" y1="678" x2="770" y2="756" stroke="#5f6368" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow)"/>
+  <text x="326" y="722" font-size="14" fill="#5f6368" text-anchor="middle">schedules onto</text>
+  <text x="746" y="722" font-size="14" fill="#5f6368" text-anchor="middle">schedules onto</text>
+
+  <!-- ==================== ROW 5: Worker Nodes (Hardware) ==================== -->
+  <text x="90" y="790" font-size="16" font-weight="bold" fill="#1a73e8" text-anchor="middle">HARDWARE</text>
+  <text x="90" y="810" font-size="13" fill="#5f6368" text-anchor="middle">(Physical Layer)</text>
+
+  <!-- Worker Node 1 -->
+  <rect x="175" y="760" width="350" height="70" rx="8" fill="url(#nodeGrad)" stroke="#4285f4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="350" y="788" text-anchor="middle" font-size="19" font-weight="600" fill="#1a237e">Worker Node 1</text>
+  <text x="350" y="814" text-anchor="middle" font-size="15" fill="#3c4043">4&#xD7; NVIDIA A100-SXM4-40GB</text>
+
+  <!-- Worker Node 2 -->
+  <rect x="595" y="760" width="350" height="70" rx="8" fill="url(#nodeGrad)" stroke="#4285f4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="770" y="788" text-anchor="middle" font-size="19" font-weight="600" fill="#1a237e">Worker Node 2</text>
+  <text x="770" y="814" text-anchor="middle" font-size="15" fill="#3c4043">2&#xD7; NVIDIA T4</text>
+
+  <!-- Node specs annotation -->
+  <rect x="960" y="770" width="220" height="50" rx="8" fill="#e8f0fe" stroke="#4285f4" stroke-width="1" stroke-dasharray="5,3"/>
+  <text x="1070" y="794" text-anchor="middle" font-size="15" fill="#1a73e8" font-weight="bold">16 vCPU &#x2022; 64 GiB</text>
+  <text x="1070" y="812" text-anchor="middle" font-size="14" fill="#5f6368">per worker node</text>
+</svg>

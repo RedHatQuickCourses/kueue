@@ -1,0 +1,140 @@
+= Create ResourceFlavors
+:navtitle: ResourceFlavors
+
+ResourceFlavors map Kueue's quota system to actual node hardware.
+Each flavor uses `nodeLabels` to target nodes with specific GPU types and includes a toleration so workloads can schedule on tainted GPU nodes.
+
+== Concepts
+
+A ResourceFlavor is a cluster-scoped resource that describes a class of hardware.
+It contains two key fields:
+
+* *`nodeLabels`* -- label selectors that identify which nodes provide this hardware. When Kueue admits a workload using this flavor, the pod inherits these labels as a `nodeSelector`.
+* *`tolerations`* -- tolerations that are injected into admitted pods, allowing them to schedule on tainted nodes.
+
+This is how Kueue bridges the gap between quota management and pod scheduling -- the ResourceFlavor ensures that workloads admitted by Kueue land on the correct GPU nodes.
+
+.ResourceFlavor vs RHOAI Hardware Profile
+[sidebar]
+****
+RHOAI introduces a concept called a https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.4/html/working_with_accelerators/working-with-hardware-profiles_accelerators[Hardware Profile^] that looks similar to a Kueue ResourceFlavor but serves a different purpose.
+Both use `nodeSelectors` and `tolerations`, which can cause confusion.
+
+[cols="1,2,2", options="header"]
+|===
+|Aspect |RHOAI Hardware Profile |Kueue ResourceFlavor
+
+|*Purpose*
+|Tells the RHOAI dashboard what hardware a workbench or model server needs (CPU, memory, accelerator type)
+|Tells Kueue what _class of nodes_ a quota applies to, so admitted workloads land on the right hardware
+
+|*Who uses it*
+|Data scientists selecting hardware in the RHOAI dashboard when launching workbenches or model serving endpoints
+|Cluster administrators defining quota boundaries per GPU type in ClusterQueues
+
+|*What it contains*
+|CPU/memory requests and limits, accelerator identifier (e.g., `nvidia.com/gpu`), tolerations, nodeSelectors
+|`nodeLabels` (injected as `nodeSelector`), `tolerations` (injected into pod spec) -- no CPU/memory fields
+
+|*When it acts*
+|At workbench/model server creation time -- the dashboard applies the profile to the pod spec
+|At Kueue admission time -- Kueue injects the flavor's labels and tolerations into the pod spec after the workload is admitted
+
+|*Scope*
+|User-facing, per-workbench or per-serving-runtime
+|Admin-facing, referenced by ClusterQueues for cluster-wide quota
+|===
+
+In this course, you use ResourceFlavors (not Hardware Profiles) because Kueue manages GPU quota and workload admission independently of the RHOAI dashboard.
+
+The three layers work together:
+
+* The *Fake GPU Operator* tells kubelet "this node has 4 A100 GPUs" (hardware layer)
+* The *ResourceFlavor* `a100-gpu` tells Kueue "workloads using this flavor belong on nodes labeled `NVIDIA-A100-SXM4-40GB`" (scheduling layer)
+* The *ClusterQueue* `a100-cluster-queue` tells Kueue "admit up to 4 GPUs worth of workloads using the `a100-gpu` flavor" (quota layer)
+
+Each layer is independent: changing the GPU count on a node does not automatically change the ClusterQueue quota, and vice versa.
+
+For homogeneous clusters with a single resource type, Kueue supports an _empty_ ResourceFlavor with no labels or tolerations -- workloads are admitted purely on quota, with no node targeting.
+****
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/resource_flavor/[Kueue: ResourceFlavor^]
+* https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector[Kubernetes: nodeSelector^]
+* https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/[Kubernetes: Taints and Tolerations^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-resourceflavors_configuring-quotas[Red Hat build of Kueue: Configuring Resource Flavors^]
+
+== Lab: Create ResourceFlavors
+
+=== 1. Create ResourceFlavors
+
+a. Review `kueue-config/2-resource-flavors.yaml` before applying:
++
+[source,yaml]
+----
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: a100-gpu                                      <1>
+spec:
+  nodeLabels:
+    nvidia.com/gpu.product: NVIDIA-A100-SXM4-40GB     <2>
+  tolerations:
+  - key: "nvidia.com/gpu"                             <3>
+    operator: "Exists"
+    effect: "NoSchedule"
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: t4-gpu                                        <1>
+spec:
+  nodeLabels:
+    nvidia.com/gpu.product: NVIDIA-T4                 <2>
+  tolerations:
+  - key: "nvidia.com/gpu"                             <3>
+    operator: "Exists"
+    effect: "NoSchedule"
+----
+<1> Each flavor gets a descriptive name that ClusterQueues reference later.
+<2> The `nodeLabels` field targets nodes with a specific GPU product. The Fake GPU Operator's status-updater automatically adds this label to each node based on the GPU topology. When Kueue admits a workload using this flavor, these labels are injected as a `nodeSelector` into the pod spec.
+<3> The toleration allows admitted pods to schedule on nodes tainted with `nvidia.com/gpu=present:NoSchedule` (the taint you applied in xref:platform-setup:fake-gpu-operator.adoc#_1_label_and_taint_worker_nodes[Label and taint worker nodes]).
+
+b. Apply the configuration:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f kueue-config/2-resource-flavors.yaml**
+resourceflavor.kueue.x-k8s.io/a100-gpu created
+resourceflavor.kueue.x-k8s.io/t4-gpu created
+----
+
+c. Verify:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get resourceflavors**
+NAME                AGE
+a100-gpu            11m
+default-flavor      4h26m
+nvidia-gpu-flavor   4h26m
+t4-gpu              11m
+----
+
+NOTE: You will also see two additional flavors -- `default-flavor` and `nvidia-gpu-flavor` -- created automatically by the Kueue after installation.
+These have an empty `spec: {}` with no nodeLabels or tolerations.
+They are harmless: since xref:kueue-install:configure-operator.adoc#disable-defaulting[Disable LocalQueue defaulting] set `labelPolicy: QueueName`, no workload is auto-assigned to the default ClusterQueue that references them.
+Only your custom `a100-gpu` and `t4-gpu` flavors are used.
+
+.How ResourceFlavors Drive Pod Placement
+[sidebar]
+****
+When Kueue admits a workload using the `a100-gpu` flavor, it injects both the `nodeLabels` (as a `nodeSelector`) and the `tolerations` into the pod spec.
+This means the pod will:
+
+. Only schedule on nodes labeled `nvidia.com/gpu.product: NVIDIA-A100-SXM4-40GB`
+. Tolerate the `nvidia.com/gpu=present:NoSchedule` taint on GPU nodes
+
+Without the ResourceFlavor, you would have to manually add `nodeSelector` and `tolerations` to every workload -- and there would be no link between the quota system and pod placement.
+****

@@ -1,0 +1,237 @@
+= Test Batch User Permissions
+:navtitle: Test User
+
+Log in as the batch user `user1` and verify the restricted access -- full Job management but limited access to Kueue infrastructure.
+
+The results in this section may surprise you.
+Some permissions come from the Kueue role you bound, some from RHOAI defaults, and some from the OpenShift `edit` role.
+Pay attention to the source of each permission -- understanding _which layer_ grants _which access_ is the key takeaway of this exercise.
+
+== References
+
+* https://kueue.sigs.k8s.io/docs/tasks/manage/rbac/[Kueue: RBAC^]
+* https://kubernetes.io/docs/reference/access-authn-authz/rbac/[Kubernetes: RBAC Authorization^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#rbac-permissions[Red Hat build of Kueue: Configuring Role-Based Permissions^]
+
+== Lab: Verify User Access and Restrictions
+
+=== 1. Log in as the batch user
+
+NOTE: RHDP users can find the password for `user1` in the `My Services` page of RHDP. Click on the `Users` tab to see the password for `user1`.
+
+[source,console,subs="+quotes"]
+----
+$ **oc login -u user1 -p <password> <cluster API url>**
+Login successful
+
+$ **oc whoami**
+user1
+----
+
+=== 2. Submit a job (should succeed)
+
+The primary purpose of the batch user role is to let users submit Jobs to Kueue-managed queues.
+This is the same test Job used in xref:test-admin.adoc[Test Admin].
+
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/job-rbac-test.yaml**
+job.batch/rbac-test-job created
+----
+
+The user can create Jobs in the `training-jobs` namespace because `kueue-batch-user-role` includes full CRUD on `batch/v1` Jobs.
+
+TIP: This is the primary use case for the batch user role -- data scientists submit training jobs without needing admin access to the cluster's queue configuration.
+
+=== 3. View LocalQueues and workloads (should succeed)
+
+a. View available queues in the namespace:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get localqueues -n training-jobs**
+NAME             CLUSTERQUEUE         PENDING WORKLOADS   ADMITTED WORKLOADS
+default          default              0                   0
+training-queue   a100-cluster-queue   0                   1
+----
+
+b. View workload status:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n training-jobs**
+NAME                      QUEUE            RESERVED IN          ADMITTED   FINISHED   AGE
+job-rbac-test-job-d20c4   training-queue   a100-cluster-queue   True                  11s
+----
+
+c. View running pods:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n training-jobs -o wide**
+NAME                  READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+rbac-test-job-xntsw   1/1     Running   0          13s   10.235.0.86   worker-cluster-vnnbf-1   <none>           <none>
+----
+
+d. View job logs:
++
+[source,console,subs="+quotes"]
+----
+$ **oc logs -n training-jobs job/rbac-test-job --tail=20**
++------------------------------------------------------------------------------+
+| NVIDIA-SMI 470.129.06   Driver Version: 470.129.06   CUDA Version: 11.4      |
++--------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                |                      |               MIG M. |
++--------------------------------+----------------------+----------------------+
+|   0  NVIDIA-A10..          Off | 00000001:00:00.0 Off |                  Off |
+| N/A   33C    P8    11W /  70W  |  40960MiB / 40960MiB |      30%     Default |
+|                                |                      |                  N/A |
++--------------------------------+----------------------+----------------------+
+----
++
+Notice that three different sources grant the permissions for these four commands:
++
+[cols="2,2", options="header"]
+|===
+|Command |Permission source
+
+|`oc get localqueues`
+|`kueue-batch-user-role` (get, list, watch on localqueues)
+
+|`oc get workloads`
+|`kueue-batch-user-role` (get, list, watch on workloads)
+
+|`oc get pods`
+|`edit` ClusterRole (pods are core Kubernetes resources, not covered by Kueue roles)
+
+|`oc logs`
+|`edit` ClusterRole (pod logs are core Kubernetes resources)
+|===
+
+=== 4. View cluster-scoped Kueue resources (mixed results)
+
+This test demonstrates the most common source of confusion in Kueue RBAC.
+
+The `kueue-batch-user-role` includes `get, list, watch` on ClusterQueues.
+You might expect the user to be able to view them.
+But the role is bound via a *RoleBinding* (namespace-scoped), and ClusterQueues are *cluster-scoped* resources.
+A RoleBinding cannot grant cluster-scoped permissions -- only a ClusterRoleBinding can.
+
+a. View ClusterQueues -- this fails because a RoleBinding cannot grant cluster-scope access:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueues**
+Error from server (Forbidden): clusterqueues.kueue.x-k8s.io is forbidden:
+User "user1" cannot list resource "clusterqueues" in API group "kueue.x-k8s.io"
+at the cluster scope
+----
++
+.Why does the role include ClusterQueue permissions if they don't work?
+[sidebar]
+****
+The `kueue-batch-user-role` is designed to work with _either_ a RoleBinding or a ClusterRoleBinding.
+If bound with a ClusterRoleBinding, the user _would_ be able to view ClusterQueues cluster-wide.
+The Kueue project includes ClusterQueue permissions in the user role to support both binding types -- the _binding_ is what controls the effective scope, not the role itself.
+
+In this lab, you use a RoleBinding because namespace isolation is the higher priority.
+****
+
+b. View ResourceFlavors -- this succeeds due to RHOAI default cluster permissions:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get resourceflavors**
+NAME                AGE
+a100-gpu            28h
+default-flavor      32h
+nvidia-gpu-flavor   32h
+t4-gpu              28h
+----
+
+c. View WorkloadPriorityClasses -- this also succeeds via RHOAI defaults:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloadpriorityclasses**
+NAME              VALUE
+high-priority     1000
+low-priority      100
+medium-priority   500
+----
++
+NOTE: ResourceFlavors and WorkloadPriorityClasses are accessible to all authenticated users on RHOAI clusters through default permissions set by the operator.
+This access does _not_ come from `kueue-batch-user-role` or any binding you created.
+Even a user with zero Kueue bindings would see the same output.
+
+=== 5. Modify Kueue infrastructure (should fail)
+
+The batch user can *view* some Kueue resources but cannot *create, modify, or delete* them.
+
+a. Try to delete a LocalQueue:
++
+[source,console,subs="+quotes"]
+----
+$ **oc delete localqueue training-queue -n training-jobs**
+Error from server (Forbidden): localqueues.kueue.x-k8s.io "training-queue"
+is forbidden: User "user1" cannot delete resource "localqueues"
+in API group "kueue.x-k8s.io" in the namespace "training-jobs"
+----
+
+b. Try to create a ClusterQueue:
++
+[source,console,subs="+quotes"]
+----
+$ **oc auth can-i create clusterqueues.kueue.x-k8s.io**
+Warning: resource 'clusterqueues' is not namespace scoped in group 'kueue.x-k8s.io'
+no
+----
+
+c. Try to create a LocalQueue:
++
+[source,console,subs="+quotes"]
+----
+$ **oc auth can-i create localqueues.kueue.x-k8s.io -n training-jobs**
+no
+----
++
+The batch user has read-only access to namespace-scoped Kueue resources (LocalQueues, Workloads) but cannot create, modify, or delete ClusterQueues or LocalQueues.
++
+WARNING: On RHOAI clusters, default permissions allow _all_ authenticated users to create and delete ResourceFlavors and WorkloadPriorityClasses.
+This is not something the `kueue-batch-user-role` grants -- it comes from RHOAI operator defaults.
+In production, restrict these permissions with additional RBAC policies.
+
+=== 6. Access other namespaces (should fail)
+
+a. Try to view LocalQueues in `inference-apps` (no RoleBinding there):
++
+[source,console,subs="+quotes"]
+----
+$ **oc get localqueues -n inference-apps**
+Error from server (Forbidden): localqueues.kueue.x-k8s.io is forbidden:
+User "user1" cannot list resource "localqueues" in API group "kueue.x-k8s.io"
+in the namespace "inference-apps"
+----
+
+b. Try to view pods in `inference-apps`:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n inference-apps**
+Error from server (Forbidden): pods is forbidden:
+User "user1" cannot list resource "pods" in API group ""
+in the namespace "inference-apps"
+----
++
+Both fail -- the batch user's RoleBinding is scoped to `training-jobs` only.
+To give `user1` access to another namespace (e.g., `inference-apps`), you would create additional RoleBindings in that namespace.
+
+=== 7. Clean up
+
+[source,console,subs="+quotes"]
+----
+$ **oc delete job rbac-test-job -n training-jobs**
+job.batch "rbac-test-job" deleted
+----

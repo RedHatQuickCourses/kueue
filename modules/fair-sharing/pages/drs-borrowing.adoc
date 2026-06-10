@@ -1,0 +1,141 @@
+= Observe DRS Borrowing
+:navtitle: DRS Borrowing
+
+With Team B idle, Team A can use all 3 GPUs -- 2 from its own quota plus 1 borrowed from Team B's idle capacity.
+In this section, you submit Team A's jobs and observe the DRS `weightedShare` values.
+
+== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#fair-sharing[Kueue: Fair Sharing^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-fairsharing[Red Hat build of Kueue: Configuring Fair Sharing^]
+
+== Lab: Submit Team A Jobs
+
+=== 1. Submit Team A jobs (observe borrowing and DRS)
+
+a. Review `workloads/job-fair-sharing-team-a.yaml` before applying.
+The file contains 3 identical Jobs (`team-a-job-1` through `team-a-job-3`).
+Here is one representative Job:
++
+[source,yaml]
+----
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: team-a-job-1
+  namespace: training-jobs                             <1>
+  labels:
+    kueue.x-k8s.io/queue-name: team-a-queue            <2>
+spec:
+  suspend: true                                        <3>
+  template:
+    metadata:
+      annotations:
+        run.ai/simulated-gpu-utilization: "60-80"
+    spec:
+      containers:
+      - name: training-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        args:
+        - |
+          END=$((SECONDS+1800))                        <4>
+          while [ $SECONDS -lt $END ]; do
+            nvidia-smi; sleep 5
+          done
+        resources:
+          requests:
+            nvidia.com/gpu: "1"                        <5>
+          limits:
+            nvidia.com/gpu: "1"
+----
+<1> All 3 jobs are in the `training-jobs` namespace, routed through `team-a-queue`.
+<2> The `queue-name` label routes these jobs to `team-a-cluster-queue` (weight 1, 2 GPU quota).
+<3> `suspend: true` lets Kueue control admission. Jobs 1 and 2 are admitted using Team A's own quota. Job 3 exceeds the 2-GPU quota and borrows from Team B's idle capacity.
+<4> Each job runs for 1800 seconds (30 minutes), giving you plenty of time to observe DRS values, check ClusterQueue status, and move to the next section to trigger preemption while the jobs are still running.
+<5> Each job requests 1 GPU. With 3 jobs and only 2 GPUs in quota, the 3rd job must borrow -- this is what raises Team A's DRS.
+
+b. Apply the workloads:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/job-fair-sharing-team-a.yaml**
+job.batch/team-a-job-1 created
+job.batch/team-a-job-2 created
+job.batch/team-a-job-3 created
+----
++
+This submits 3 Jobs (1 GPU each) to `team-a-queue` in `training-jobs`:
++
+[cols="2,1,3", options="header"]
+|===
+|Job |GPUs |Quota Source
+
+|`team-a-job-1`
+|1
+|Team A's own quota (slot 1 of 2)
+
+|`team-a-job-2`
+|1
+|Team A's own quota (slot 2 of 2)
+
+|`team-a-job-3`
+|1
+|*Borrowed* from Team B's idle capacity
+|===
+
+c. Verify all three are admitted:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n training-jobs**
+NAME                     QUEUE          RESERVED IN            ADMITTED   FINISHED   AGE
+job-team-a-job-1-e9c97   team-a-queue   team-a-cluster-queue   True                  32s
+job-team-a-job-2-304fe   team-a-queue   team-a-cluster-queue   True                  31s
+job-team-a-job-3-fa75d   team-a-queue   team-a-cluster-queue   True                  30s
+
+$ **oc get pods -n training-jobs -o wide**
+NAME                 READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+team-a-job-1-qp9vf   1/1     Running   0          51s   10.235.0.52   worker-cluster-vnnbf-1   <none>           <none>
+team-a-job-2-d74x5   1/1     Running   0          50s   10.235.0.53   worker-cluster-vnnbf-1   <none>           <none>
+team-a-job-3-rdbp8   1/1     Running   0          49s   10.235.0.54   worker-cluster-vnnbf-1   <none>           <none>
+----
+
+d. Check the DRS observable -- this is unique to fair sharing:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueue team-a-cluster-queue -o jsonpath='{.status.fairSharing}' | python3 -m json.tool**
+{
+    "weightedShare": 334
+}
+$ **oc get clusterqueue team-b-cluster-queue -o jsonpath='{.status.fairSharing}' | python3 -m json.tool**
+{
+    "weightedShare": 0
+}
+----
++
+Team A's `weightedShare` should be *non-zero* -- it is using 3 GPUs against a nominal quota of 2, meaning it is borrowing.
+Team B's `weightedShare` should be *0* -- no usage at all.
+
+.Why 334 and not 1000?
+[sidebar]
+****
+In xref:index.adoc[the introduction], the DRS formula was presented as `(borrowing / lendable) x 1000 / weight`, which gives 1000 for this scenario.
+That is a simplified version to build intuition.
+
+The actual formula Kueue uses to compute `weightedShare` is:
+
+`weightedShare = 1000 x (usage - nominal) / (cohort_total x weight)`
+
+For Team A: `1000 x (3 - 2) / (3 x 1) = 334`
+
+The difference is that the real formula divides by the *total cohort capacity* (3 GPUs), not just the lendable portion (1 GPU).
+This produces a value between 0 and 1000 that represents how much of the *entire cohort* the queue is over-consuming, normalized by weight.
+
+* `weightedShare = 0` means the queue is at or below its nominal quota -- safe from preemption
+* `weightedShare > 0` means the queue is borrowing -- the higher the value, the more over-entitled it is, and the first to be preempted
+
+The exact number does not matter to students.
+What matters is the *relative comparison*: Team A = 334 vs Team B = 0.
+Kueue always preempts the queue with the highest `weightedShare`.
+****

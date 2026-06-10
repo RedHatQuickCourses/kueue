@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 640" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <linearGradient id="inst1Compute" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a5d6a7"/>
+      <stop offset="100%" stop-color="#66bb6a"/>
+    </linearGradient>
+    <linearGradient id="inst1Mem" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#90caf9"/>
+      <stop offset="100%" stop-color="#42a5f5"/>
+    </linearGradient>
+    <linearGradient id="inst2Compute" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ef9a9a"/>
+      <stop offset="100%" stop-color="#ef5350"/>
+    </linearGradient>
+    <linearGradient id="inst2Mem" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f48fb1"/>
+      <stop offset="100%" stop-color="#ec407a"/>
+    </linearGradient>
+    <linearGradient id="inst3Compute" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ce93d8"/>
+      <stop offset="100%" stop-color="#ab47bc"/>
+    </linearGradient>
+    <linearGradient id="inst3Mem" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b39ddb"/>
+      <stop offset="100%" stop-color="#7e57c2"/>
+    </linearGradient>
+    <linearGradient id="gpuGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fafafa"/>
+      <stop offset="100%" stop-color="#eeeeee"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="38" text-anchor="middle" font-size="28" font-weight="bold" fill="#202124">Fully Partitioned A100 (3 MIG Instances)</text>
+  <text x="550" y="66" text-anchor="middle" font-size="18" fill="#5f6368">All 7 compute slices and all 8 memory slices are allocated -- zero waste</text>
+
+  <!-- GPU outer border -->
+  <rect x="40" y="90" width="1020" height="420" rx="16" fill="url(#gpuGrad)" stroke="#616161" stroke-width="2" filter="url(#shadow)"/>
+  <text x="80" y="126" font-size="18" font-weight="bold" fill="#424242">NVIDIA A100-SXM4-40GB -- MIG Partitioned</text>
+
+  <!-- Divider lines between instances -->
+  <line x1="380" y1="140" x2="380" y2="490" stroke="#9e9e9e" stroke-width="2" stroke-dasharray="8,4"/>
+  <line x1="670" y1="140" x2="670" y2="490" stroke="#9e9e9e" stroke-width="2" stroke-dasharray="8,4"/>
+
+  <!-- ========== Instance A: 3g.20gb ========== -->
+  <rect x="65" y="145" width="290" height="46" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="210" y="174" text-anchor="middle" font-size="18" font-weight="bold" fill="#1b5e20">Instance A: 3g.20gb</text>
+
+  <!-- Compute -->
+  <text x="80" y="222" font-size="14" font-weight="bold" fill="#2e7d32">Compute (3 slices):</text>
+  <rect x="80" y="234" width="84" height="50" rx="6" fill="url(#inst1Compute)" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="122" y="265" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">C1</text>
+  <rect x="174" y="234" width="84" height="50" rx="6" fill="url(#inst1Compute)" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="216" y="265" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">C2</text>
+  <rect x="268" y="234" width="84" height="50" rx="6" fill="url(#inst1Compute)" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="310" y="265" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">C3</text>
+
+  <!-- Memory -->
+  <text x="80" y="316" font-size="14" font-weight="bold" fill="#1565c0">Memory (20 GiB):</text>
+  <rect x="80" y="328" width="66" height="50" rx="6" fill="url(#inst1Mem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="113" y="359" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="156" y="328" width="66" height="50" rx="6" fill="url(#inst1Mem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="189" y="359" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="232" y="328" width="66" height="50" rx="6" fill="url(#inst1Mem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="265" y="359" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="308" y="328" width="66" height="50" rx="6" fill="url(#inst1Mem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="341" y="359" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">5 GiB</text>
+
+  <!-- K8s resource name -->
+  <rect x="80" y="400" width="278" height="36" rx="6" fill="#e8f5e9" stroke="#66bb6a" stroke-width="1"/>
+  <text x="219" y="424" text-anchor="middle" font-size="13" font-weight="600" fill="#2e7d32">nvidia.com/mig-3g.20gb: 1</text>
+
+  <!-- Capacity note -->
+  <text x="219" y="464" text-anchor="middle" font-size="13" fill="#616161">~42 SMs, 20 GiB VRAM</text>
+  <text x="219" y="482" text-anchor="middle" font-size="13" fill="#757575">Training / large inference</text>
+
+  <!-- ========== Instance B: 2g.10gb ========== -->
+  <rect x="400" y="145" width="250" height="46" rx="8" fill="#fce4ec" stroke="#c62828" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="525" y="174" text-anchor="middle" font-size="18" font-weight="bold" fill="#b71c1c">Instance B: 2g.10gb</text>
+
+  <!-- Compute -->
+  <text x="410" y="222" font-size="14" font-weight="bold" fill="#c62828">Compute (2 slices):</text>
+  <rect x="410" y="234" width="104" height="50" rx="6" fill="url(#inst2Compute)" stroke="#c62828" stroke-width="1.5"/>
+  <text x="462" y="265" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">C4</text>
+  <rect x="524" y="234" width="104" height="50" rx="6" fill="url(#inst2Compute)" stroke="#c62828" stroke-width="1.5"/>
+  <text x="576" y="265" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">C5</text>
+
+  <!-- Memory -->
+  <text x="410" y="316" font-size="14" font-weight="bold" fill="#1565c0">Memory (10 GiB):</text>
+  <rect x="410" y="328" width="104" height="50" rx="6" fill="url(#inst2Mem)" stroke="#ad1457" stroke-width="1.5"/>
+  <text x="462" y="359" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="524" y="328" width="104" height="50" rx="6" fill="url(#inst2Mem)" stroke="#ad1457" stroke-width="1.5"/>
+  <text x="576" y="359" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">5 GiB</text>
+
+  <!-- K8s resource name -->
+  <rect x="410" y="400" width="228" height="36" rx="6" fill="#fce4ec" stroke="#ef9a9a" stroke-width="1"/>
+  <text x="524" y="424" text-anchor="middle" font-size="13" font-weight="600" fill="#c62828">nvidia.com/mig-2g.10gb: 1</text>
+
+  <!-- Capacity note -->
+  <text x="524" y="464" text-anchor="middle" font-size="13" fill="#616161">~28 SMs, 10 GiB VRAM</text>
+  <text x="524" y="482" text-anchor="middle" font-size="13" fill="#757575">Medium inference</text>
+
+  <!-- ========== Instance C: 1g.5gb + 1g.5gb ========== -->
+  <rect x="690" y="145" width="350" height="46" rx="8" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="865" y="174" text-anchor="middle" font-size="18" font-weight="bold" fill="#4a148c">Instance C + D: 1g.5gb each</text>
+
+  <!-- Compute -->
+  <text x="700" y="222" font-size="14" font-weight="bold" fill="#7b1fa2">Compute (1 slice each):</text>
+  <rect x="700" y="234" width="104" height="50" rx="6" fill="url(#inst3Compute)" stroke="#7b1fa2" stroke-width="1.5"/>
+  <text x="752" y="265" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">C6</text>
+  <rect x="814" y="234" width="104" height="50" rx="6" fill="url(#inst3Compute)" stroke="#7b1fa2" stroke-width="1.5"/>
+  <text x="866" y="265" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">C7</text>
+
+  <!-- Memory -->
+  <text x="700" y="316" font-size="14" font-weight="bold" fill="#1565c0">Memory (5 GiB each):</text>
+  <rect x="700" y="328" width="104" height="50" rx="6" fill="url(#inst3Mem)" stroke="#512da8" stroke-width="1.5"/>
+  <text x="752" y="359" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="814" y="328" width="104" height="50" rx="6" fill="url(#inst3Mem)" stroke="#512da8" stroke-width="1.5"/>
+  <text x="866" y="359" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">5 GiB</text>
+
+  <!-- K8s resource name -->
+  <rect x="700" y="400" width="228" height="36" rx="6" fill="#f3e5f5" stroke="#ce93d8" stroke-width="1"/>
+  <text x="814" y="424" text-anchor="middle" font-size="13" font-weight="600" fill="#6a1b9a">nvidia.com/mig-1g.5gb: 2</text>
+
+  <!-- Capacity note -->
+  <text x="814" y="464" text-anchor="middle" font-size="13" fill="#616161">~14 SMs, 5 GiB each</text>
+  <text x="814" y="482" text-anchor="middle" font-size="13" fill="#757575">Dev / testing / small jobs</text>
+
+  <!-- Summary bar -->
+  <rect x="40" y="520" width="1020" height="100" rx="12" fill="#e8eaf6" stroke="#3f51b5" stroke-width="1.5"/>
+  <text x="550" y="550" text-anchor="middle" font-size="18" font-weight="bold" fill="#283593">Partitioning Summary</text>
+  <text x="550" y="578" text-anchor="middle" font-size="15" fill="#3949ab">Compute: C1-C3 (3g) + C4-C5 (2g) + C6 (1g) + C7 (1g) = 7 of 7 slices used</text>
+  <text x="550" y="600" text-anchor="middle" font-size="15" fill="#3949ab">Memory: 20 GiB + 10 GiB + 5 GiB + 5 GiB = 40 of 40 GiB used</text>
+</svg>

@@ -1,0 +1,59 @@
+= Verify ClusterRoles
+:navtitle: Verify Roles
+
+Before creating bindings, confirm that the Kueue operator deployed the aggregated ClusterRoles.
+
+.What is an aggregated ClusterRole?
+[sidebar]
+****
+A normal ClusterRole lists its permissions directly.
+An *aggregated* ClusterRole has no permissions of its own -- instead, it uses label selectors to automatically combine permissions from other ClusterRoles.
+
+For example, `kueue-batch-user-role` aggregates every ClusterRole that has the label `rbac.kueue.x-k8s.io/batch-user: "true"`.
+The Kueue operator creates sub-roles like `kueue-job-editor-role`, `kueue-localqueue-viewer-role`, etc., each with that label.
+Kubernetes automatically merges their permissions into the parent role.
+
+This means if a future Kueue version adds support for a new workload type (e.g., a new ML training framework), the operator can deploy a new sub-role with the right label, and `kueue-batch-user-role` picks up the permissions automatically -- no manual updates needed.
+****
+
+== References
+
+* https://kueue.sigs.k8s.io/docs/tasks/manage/rbac/[Kueue: RBAC^]
+* https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles[Kubernetes: Aggregated ClusterRoles^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#rbac-permissions[Red Hat build of Kueue: Configuring Role-Based Permissions^]
+
+== Lab: Verify Kueue ClusterRoles Exist
+
+=== 1. Check for the aggregated ClusterRoles
+
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterrole | grep kueue-batch**
+kueue-batch-admin-role                                                             2026-06-08T06:16:18Z
+kueue-batch-user-role                                                              2026-06-08T06:16:18Z
+----
+
+These roles are created automatically by the Kueue operator.
+If they don't appear, verify that the operator is running (`oc get pods -n openshift-kueue-operator`).
+
+You can inspect the aggregated permissions.
+
+See what the admin role includes:
+
+[source,console,subs="+quotes"]
+----
+$ **oc describe clusterrole kueue-batch-admin-role**
+----
+
+See what the user role includes:
+
+[source,console,subs="+quotes"]
+----
+$ **oc describe clusterrole kueue-batch-user-role**
+----
+
+The admin role should show full CRUD verbs on `clusterqueues`, `localqueues`, `resourceflavors`, `workloads`, and `jobs`.
+The user role should show `get`, `list`, `watch` on `clusterqueues`, `localqueues`, and `workloads`, plus full CRUD on `jobs` and other workload types (PyTorchJobs, RayJobs, etc.).
+
+TIP: The output of `oc describe clusterrole kueue-batch-user-role` is long because it includes permissions for every workload type Kueue supports (Jobs, JobSets, PyTorchJobs, RayJobs, TrainJobs, and more).
+Don't worry about memorizing all of them -- the important pattern is: *full CRUD on workloads, read-only on infrastructure*.

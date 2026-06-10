@@ -1,0 +1,126 @@
+= Configure Cohort ClusterQueues
+:navtitle: Cohort Setup
+
+In this section, you apply updated ClusterQueue definitions that join both queues into a cohort, enabling cross-pool GPU borrowing.
+
+== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#cohort[Kueue: Cohort^]
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#borrowing-limit[Kueue: Borrowing and Lending Limits^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#using-cohorts[Red Hat build of Kueue: Using Cohorts^]
+
+== Lab: Apply and Verify Cohort Configuration
+
+[[apply-cohort]]
+=== 1. Apply cohort-enabled ClusterQueues
+
+a. Review `kueue-config/9-cohort-cluster-queues.yaml` before applying.
+This file replaces the original isolated ClusterQueues with cohort-enabled versions.
++
+The *a100-cluster-queue* (lender):
++
+
+[source,yaml]
+----
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: a100-cluster-queue
+spec:
+  cohortName: gpu-cohort                               <1>
+  namespaceSelector: {}
+  preemption:
+    withinClusterQueue: LowerPriority
+  resourceGroups:
+  - coveredResources: ["cpu", "memory", "nvidia.com/gpu"]
+    flavors:
+    - name: a100-gpu
+      resources:
+      - name: nvidia.com/gpu
+        nominalQuota: 4
+        lendingLimit: 1                                <2>
+      ...
+----
+<1> `cohortName: gpu-cohort` joins this queue into a shared pool. Both ClusterQueues must use the same cohort name for borrowing to work.
+<2> `lendingLimit: 1` means this queue will lend at most 1 GPU to other queues in the cohort. The remaining 3 A100 GPUs are always reserved for training workloads.
++
+The *t4-cluster-queue* (borrower) lists two flavors:
++
+
+[source,yaml]
+----
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: t4-cluster-queue
+spec:
+  cohortName: gpu-cohort                               <1>
+  ...
+  resourceGroups:
+  - coveredResources: ["cpu", "memory", "nvidia.com/gpu"]
+    flavors:
+    - name: t4-gpu                                     <2>
+      resources:
+      - name: nvidia.com/gpu
+        nominalQuota: 2
+    - name: a100-gpu                                   <3>
+      resources:
+      - name: cpu
+        nominalQuota: 0                                <4>
+        borrowingLimit: 4
+      - name: nvidia.com/gpu
+        nominalQuota: 0                                <4>
+        borrowingLimit: 1                              <5>
+----
+<1> Same `cohortName` as the A100 queue -- this is what makes borrowing possible.
+<2> The primary flavor. Kueue tries `t4-gpu` first for every workload submitted to this queue.
+<3> The fallback flavor. When T4 GPUs are exhausted, Kueue falls back to `a100-gpu` and borrows from the cohort.
+<4> `nominalQuota: 0` means this queue owns zero A100 resources -- it can only use them by borrowing.
+<5> `borrowingLimit: 1` caps how many GPUs this queue can borrow from the cohort. This matches the A100 queue's `lendingLimit`.
+
+b. Apply the configuration (this overwrites the existing queues in place):
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f kueue-config/9-cohort-cluster-queues.yaml**
+clusterqueue.kueue.x-k8s.io/a100-cluster-queue configured
+clusterqueue.kueue.x-k8s.io/t4-cluster-queue configured
+----
+
+=== 2. Verify cohort configuration
+
+a. Check that both ClusterQueues are in the same cohort:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueues -A -o wide**
+NAME                 COHORT       STRATEGY         PENDING WORKLOADS   ADMITTED WORKLOADS
+a100-cluster-queue   gpu-cohort   BestEffortFIFO   0                   0
+default                           BestEffortFIFO   0                   0
+t4-cluster-queue     gpu-cohort   BestEffortFIFO   0                   0
+----
+
+b. Check the T4 queue has two flavors (`t4-gpu` and `a100-gpu`):
++
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueue t4-cluster-queue \
+  -o jsonpath='{range .spec.resourceGroups[0].flavors[*]}{.name}{"\n"}{end}'**
+t4-gpu
+a100-gpu
+----
+
+c. Check the A100 queue GPU lending limit (should be 1):
++
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueue a100-cluster-queue \
+  -o jsonpath='{.spec.resourceGroups[0].flavors[0].resources[?(@.name=="nvidia.com/gpu")].lendingLimit}'**
+1
+----
++
+Both queues should show `gpu-cohort` in the COHORT column.
+The T4 queue should list two flavors (`t4-gpu` and `a100-gpu`), and the A100 queue should show a `lendingLimit` of `1`.
++
+IMPORTANT: If either ClusterQueue does not show `gpu-cohort` as the cohort name, the YAML was not applied correctly.
+Re-check the file `kueue-config/9-cohort-cluster-queues.yaml` and verify that both ClusterQueues have `spec.cohort: gpu-cohort`.

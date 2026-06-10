@@ -1,0 +1,201 @@
+= Inference Deployment
+:navtitle: Inference Deployment
+
+In this exercise, you submit a long-running Deployment to the inference namespace.
+Unlike Jobs, Deployments run indefinitely -- they represent always-on services like model inference endpoints.
+
+This exercise proves that the LocalQueue -> ClusterQueue -> ResourceFlavor chain correctly isolates inference workloads to T4 GPUs on worker-2.
+
+== Concepts
+
+So far, all workloads have been Jobs submitted to the A100 training queue.
+This exercise introduces two new concepts:
+
+* *Cross-queue isolation* -- the inference Deployment submits to `inference-queue`, which routes to `t4-cluster-queue` with the `t4-gpu` ResourceFlavor. The pod must land on worker-2 (T4 node), not worker-1 (A100 node).
+* *Long-running workloads* -- Deployments hold their GPU allocation indefinitely. Unlike Jobs, they do not release resources when they finish because they never finish.
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/tasks/run/deployments/[Kueue: Running Deployments^]
+* https://kubernetes.io/docs/concepts/workloads/controllers/deployment/[Kubernetes: Deployments^]
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#cohort[Kueue: Cohort (preview of next chapter)^]
+* https://kueue.sigs.k8s.io/docs/concepts/[Kueue: Core Concepts^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#using-cohorts[Red Hat build of Kueue: Using Cohorts^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#managing-workloads[Red Hat build of Kueue: Managing Jobs and Workloads^]
+
+== Lab: Submit an Inference Deployment
+
+=== 1. Submit an inference Deployment
+
+a. Review `workloads/deployment-workload.yaml` before applying:
++
+[source,yaml]
+----
+apiVersion: apps/v1
+kind: Deployment                                   <1>
+metadata:
+  name: inference-app-1
+  namespace: inference-apps                        <2>
+  labels:
+    kueue.x-k8s.io/queue-name: inference-queue     <3>
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inference-app-1
+  template:
+    metadata:
+      labels:
+        app: inference-app-1
+      annotations:
+        run.ai/simulated-gpu-utilization: "20-40"
+    spec:
+      containers:
+      - name: inference-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          echo "=== Inference App: inference-app-1 ==="
+          while true; do                           <4>
+            nvidia-smi
+            sleep 5
+          done
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+            nvidia.com/gpu: "1"                    <5>
+          limits:
+            nvidia.com/gpu: "1"
+----
+<1> Unlike the previous exercises, this is a *Deployment*, not a Job. Kueue manages Deployments using scheduling gates instead of `suspend: true`. There is no `suspend` field.
+<2> The Deployment is in the `inference-apps` namespace, which routes to a different queue than the training Jobs.
+<3> The `queue-name` label routes the Deployment to `inference-queue`, which forwards it to `t4-cluster-queue` -- a completely separate GPU pool from the A100 training queue.
+<4> The container runs an infinite loop (`while true`), simulating an always-on inference service. Unlike Jobs, Deployments hold their GPU allocation indefinitely.
+<5> The Deployment requests 1 T4 GPU. The `t4-cluster-queue` has a quota of 2 GPUs, so this Deployment is admitted immediately.
+
+b. Apply the workload:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/deployment-workload.yaml**
+deployment.apps/inference-app-1 created
+----
++
+This creates:
++
+[cols="1,1,1,1,1", options="header"]
+|===
+|Deployment |Namespace |Queue |GPUs |Target Node
+
+|`inference-app-1`
+|`inference-apps`
+|`inference-queue` -> `t4-cluster-queue`
+|1
+|worker-2 (T4)
+|===
+
+c. Check Kueue admission:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloads -n inference-apps**
+NAME                                        QUEUE             RESERVED IN        ADMITTED   FINISHED   AGE
+pod-inference-app-1-cfdc98974-6qqkj-ff5ac   inference-queue   t4-cluster-queue   True                  15s
+----
+
+d. Check the pod is running on the T4 node (worker-2):
++
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n inference-apps -o wide**
+NAME                              READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+inference-app-1-cfdc98974-6qqkj   1/1     Running   0          31s   10.232.2.42   worker-cluster-vnnbf-2   <none>           <none>
+----
+
+e. Check `nvidia-smi` output -- should show NVIDIA T4 with 16384 MiB:
++
+[source,console,subs="+quotes"]
+----
+$ **oc logs -n inference-apps deploy/inference-app-1 --tail=20**
++------------------------------------------------------------------------------+
+| NVIDIA-SMI 470.129.06   Driver Version: 470.129.06   CUDA Version: 11.4      |
++--------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                |                      |               MIG M. |
++--------------------------------+----------------------+----------------------+
+|   0  NVIDIA-T4             Off | 00000001:00:00.0 Off |                  Off |
+| N/A   33C    P8    11W /  70W  |  16384MiB / 16384MiB |      25%     Default |
+|                                |                      |                  N/A |
++--------------------------------+----------------------+----------------------+
+
++------------------------------------------------------------------------------+
+| Processes:                                                                   |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory  |
+|        ID   ID                                                   Usage       |
++------------------------------------------------------------------------------+
+|    0   N/A  N/A       100      G   /bin/bash-cecho "=== Infe..    16384MiB   |
++------------------------------------------------------------------------------+
+----
++
+The NVIDIA T4 GPU product name in the nvidia-smi output confirms the Deployment landed on worker-2, not worker-1.
+This proves the LocalQueue -> ClusterQueue -> ResourceFlavor chain correctly isolates inference workloads to T4 GPUs.
++
+TIP: Compare the `nvidia-smi` output from this Deployment with the A100 test pods from xref:platform-setup:verify-fake-gpus.adoc[Verify Fake GPUs].
+The GPU model (`NVIDIA T4` vs `NVIDIA A100-SXM4-40GB`) and memory (`16384 MiB` vs `40960 MiB`) should be different, confirming that each queue routes to the correct hardware.
+
+f. Clean up:
++
+[source,console,subs="+quotes"]
+----
+$ **oc delete deployment inference-app-1 -n inference-apps**
+deployment.apps "inference-app-1" deleted from inference-apps namespace
+----
+
+.Cluster Reboot and UnexpectedAdmissionError
+[sidebar]
+****
+If you reboot the cluster while Kueue-managed Deployments are running, you may see pods in `UnexpectedAdmissionError` status after the reboot:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -n inference-apps**
+NAME                                READY   STATUS                     AGE
+inference-app-1-cfdc98974-6qqkj     0/1     UnexpectedAdmissionError   11h
+inference-app-1-cfdc98974-x8f2m     1/1     Running                    5m
+----
+
+*Why this happens:*
+When the cluster restarts, the Kueue controller loses its in-memory admission state.
+Pods that were admitted before the reboot cannot be re-admitted because their Kueue workload objects are stale.
+Kueue marks these pods as `UnexpectedAdmissionError` and does not retry them.
+
+*Why it is not a problem:*
+Because these workloads are Deployments, the Deployment controller detects that the pod is failed and automatically creates a replacement pod.
+Kueue admits the replacement pod through the normal admission pipeline (LocalQueue -> ClusterQueue -> ResourceFlavor), and it starts running.
+The stale pod remains in `UnexpectedAdmissionError` status until you delete it manually.
+
+Jobs are not affected by this issue because Kueue manages Jobs using `suspend: true/false` rather than scheduling gates.
+After a reboot, suspended Jobs are re-evaluated and re-admitted normally.
+
+*Clean up stale pods:*
+
+[source,console,subs="+quotes"]
+----
+$ **oc get pods -A --field-selector=status.phase=Failed | grep UnexpectedAdmissionError**
+
+$ **oc delete pods -A --field-selector=status.phase=Failed**
+----
+****
+
+== Summary
+
+You have verified three Kueue admission behaviors:
+
+* *FIFO admission* -- workloads without priority are admitted in submission order
+* *Priority-based admission* -- WorkloadPriorityClass values override submission order; higher priority workloads are admitted first
+* *Cross-queue isolation* -- the inference Deployment landed on the T4 node (worker-2), not the A100 node (worker-1), proving that the LocalQueue -> ClusterQueue -> ResourceFlavor chain enforces GPU pool isolation
+
+In the xref:cohort-borrowing:index.adoc[next chapter], you learn how to share unused GPU capacity across pools using cohort borrowing.

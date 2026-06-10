@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 880" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <linearGradient id="computeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8f5e9"/>
+      <stop offset="100%" stop-color="#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="memGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e3f2fd"/>
+      <stop offset="100%" stop-color="#bbdefb"/>
+    </linearGradient>
+    <linearGradient id="usedCompute" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a5d6a7"/>
+      <stop offset="100%" stop-color="#66bb6a"/>
+    </linearGradient>
+    <linearGradient id="usedMem" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#90caf9"/>
+      <stop offset="100%" stop-color="#42a5f5"/>
+    </linearGradient>
+    <linearGradient id="unusedGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5f5f5"/>
+      <stop offset="100%" stop-color="#e0e0e0"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="38" text-anchor="middle" font-size="28" font-weight="bold" fill="#202124">MIG Profile Examples (A100 40GB)</text>
+  <text x="550" y="66" text-anchor="middle" font-size="18" fill="#5f6368">Each profile claims a specific number of compute and memory slices</text>
+
+  <!-- ========== Profile 1: 1g.5gb ========== -->
+  <rect x="40" y="90" width="1020" height="170" rx="12" fill="none" stroke="#bdbdbd" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="80" y="120" font-size="20" font-weight="bold" fill="#424242">1g.5gb</text>
+  <text x="200" y="120" font-size="15" fill="#757575">-- Smallest slice: 1 compute + 1 memory (5 GiB)</text>
+
+  <!-- Compute row -->
+  <text x="80" y="150" font-size="14" font-weight="bold" fill="#2e7d32">Compute:</text>
+  <rect x="170" y="132" width="90" height="36" rx="6" fill="url(#usedCompute)" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="215" y="156" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">C1</text>
+  <rect x="270" y="132" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="315" y="156" text-anchor="middle" font-size="13" fill="#9e9e9e">C2</text>
+  <rect x="370" y="132" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="415" y="156" text-anchor="middle" font-size="13" fill="#9e9e9e">C3</text>
+  <rect x="470" y="132" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="515" y="156" text-anchor="middle" font-size="13" fill="#9e9e9e">C4</text>
+  <rect x="570" y="132" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="615" y="156" text-anchor="middle" font-size="13" fill="#9e9e9e">C5</text>
+  <rect x="670" y="132" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="715" y="156" text-anchor="middle" font-size="13" fill="#9e9e9e">C6</text>
+  <rect x="770" y="132" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="815" y="156" text-anchor="middle" font-size="13" fill="#9e9e9e">C7</text>
+
+  <!-- Memory row -->
+  <text x="80" y="208" font-size="14" font-weight="bold" fill="#1565c0">Memory:</text>
+  <rect x="170" y="190" width="76" height="36" rx="6" fill="url(#usedMem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="208" y="214" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="256" y="190" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="342" y="190" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="428" y="190" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="514" y="190" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="600" y="190" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="686" y="190" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="772" y="190" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+
+  <!-- Use case -->
+  <text x="900" y="156" font-size="14" fill="#616161" font-weight="600">Use case:</text>
+  <text x="900" y="178" font-size="13" fill="#757575">Small inference,</text>
+  <text x="900" y="196" font-size="13" fill="#757575">development, testing</text>
+
+  <!-- ========== Profile 2: 2g.10gb ========== -->
+  <rect x="40" y="280" width="1020" height="170" rx="12" fill="none" stroke="#bdbdbd" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="80" y="310" font-size="20" font-weight="bold" fill="#424242">2g.10gb</text>
+  <text x="210" y="310" font-size="15" fill="#757575">-- Mid-range slice: 2 compute + 2 memory (10 GiB)</text>
+
+  <!-- Compute row -->
+  <text x="80" y="340" font-size="14" font-weight="bold" fill="#2e7d32">Compute:</text>
+  <rect x="170" y="322" width="90" height="36" rx="6" fill="url(#usedCompute)" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="215" y="346" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">C1</text>
+  <rect x="270" y="322" width="90" height="36" rx="6" fill="url(#usedCompute)" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="315" y="346" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">C2</text>
+  <rect x="370" y="322" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="415" y="346" text-anchor="middle" font-size="13" fill="#9e9e9e">C3</text>
+  <rect x="470" y="322" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="515" y="346" text-anchor="middle" font-size="13" fill="#9e9e9e">C4</text>
+  <rect x="570" y="322" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="615" y="346" text-anchor="middle" font-size="13" fill="#9e9e9e">C5</text>
+  <rect x="670" y="322" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="715" y="346" text-anchor="middle" font-size="13" fill="#9e9e9e">C6</text>
+  <rect x="770" y="322" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="815" y="346" text-anchor="middle" font-size="13" fill="#9e9e9e">C7</text>
+
+  <!-- Memory row -->
+  <text x="80" y="398" font-size="14" font-weight="bold" fill="#1565c0">Memory:</text>
+  <rect x="170" y="380" width="76" height="36" rx="6" fill="url(#usedMem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="208" y="404" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="256" y="380" width="76" height="36" rx="6" fill="url(#usedMem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="294" y="404" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="342" y="380" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="428" y="380" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="514" y="380" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="600" y="380" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="686" y="380" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="772" y="380" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+
+  <!-- Use case -->
+  <text x="900" y="346" font-size="14" fill="#616161" font-weight="600">Use case:</text>
+  <text x="900" y="368" font-size="13" fill="#757575">Medium models,</text>
+  <text x="900" y="386" font-size="13" fill="#757575">batch inference</text>
+
+  <!-- ========== Profile 3: 3g.20gb ========== -->
+  <rect x="40" y="470" width="1020" height="170" rx="12" fill="none" stroke="#bdbdbd" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="80" y="500" font-size="20" font-weight="bold" fill="#424242">3g.20gb</text>
+  <text x="212" y="500" font-size="15" fill="#757575">-- Half-GPU: 3 compute + 4 memory (20 GiB)</text>
+
+  <!-- Compute row -->
+  <text x="80" y="530" font-size="14" font-weight="bold" fill="#2e7d32">Compute:</text>
+  <rect x="170" y="512" width="90" height="36" rx="6" fill="url(#usedCompute)" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="215" y="536" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">C1</text>
+  <rect x="270" y="512" width="90" height="36" rx="6" fill="url(#usedCompute)" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="315" y="536" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">C2</text>
+  <rect x="370" y="512" width="90" height="36" rx="6" fill="url(#usedCompute)" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="415" y="536" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">C3</text>
+  <rect x="470" y="512" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="515" y="536" text-anchor="middle" font-size="13" fill="#9e9e9e">C4</text>
+  <rect x="570" y="512" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="615" y="536" text-anchor="middle" font-size="13" fill="#9e9e9e">C5</text>
+  <rect x="670" y="512" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="715" y="536" text-anchor="middle" font-size="13" fill="#9e9e9e">C6</text>
+  <rect x="770" y="512" width="90" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="815" y="536" text-anchor="middle" font-size="13" fill="#9e9e9e">C7</text>
+
+  <!-- Memory row -->
+  <text x="80" y="588" font-size="14" font-weight="bold" fill="#1565c0">Memory:</text>
+  <rect x="170" y="570" width="76" height="36" rx="6" fill="url(#usedMem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="208" y="594" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="256" y="570" width="76" height="36" rx="6" fill="url(#usedMem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="294" y="594" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="342" y="570" width="76" height="36" rx="6" fill="url(#usedMem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="380" y="594" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="428" y="570" width="76" height="36" rx="6" fill="url(#usedMem)" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="466" y="594" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">5 GiB</text>
+  <rect x="514" y="570" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="600" y="570" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="686" y="570" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <rect x="772" y="570" width="76" height="36" rx="6" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+
+  <!-- Use case -->
+  <text x="900" y="530" font-size="14" fill="#616161" font-weight="600">Use case:</text>
+  <text x="900" y="552" font-size="13" fill="#757575">Training, large models,</text>
+  <text x="900" y="570" font-size="13" fill="#757575">production inference</text>
+
+  <!-- Note about asymmetry -->
+  <rect x="40" y="660" width="1020" height="80" rx="10" fill="#fff8e1" stroke="#f9a825" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="550" y="690" text-anchor="middle" font-size="16" font-weight="bold" fill="#f57f17">Why does 3g.20gb get 4 memory slices instead of 3?</text>
+  <text x="550" y="716" text-anchor="middle" font-size="14" fill="#795548">The A100 has 7 compute slices but 8 memory slices. The extra memory slice is distributed to larger profiles,</text>
+  <text x="550" y="736" text-anchor="middle" font-size="14" fill="#795548">so profiles at 3g and above receive a bonus memory slice. This is why 3g gets 20 GiB (4 x 5) instead of 15 GiB.</text>
+
+  <!-- Legend -->
+  <rect x="40" y="770" width="1020" height="90" rx="10" fill="#fafafa" stroke="#e0e0e0" stroke-width="1"/>
+  <text x="80" y="800" font-size="15" font-weight="bold" fill="#424242">Legend:</text>
+  <rect x="80" y="815" width="30" height="20" rx="4" fill="url(#usedCompute)" stroke="#2e7d32" stroke-width="1"/>
+  <text x="120" y="831" font-size="13" fill="#616161">Allocated to this instance</text>
+  <rect x="310" y="815" width="30" height="20" rx="4" fill="url(#usedMem)" stroke="#1565c0" stroke-width="1"/>
+  <text x="350" y="831" font-size="13" fill="#616161">Allocated memory</text>
+  <rect x="530" y="815" width="30" height="20" rx="4" fill="url(#unusedGrad)" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="570" y="831" font-size="13" fill="#616161">Available for other instances</text>
+</svg>

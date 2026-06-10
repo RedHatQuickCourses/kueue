@@ -1,0 +1,131 @@
+= Test Batch Admin Permissions
+:navtitle: Test Admin
+
+Log in as the batch admin user and verify full access to Kueue resources.
+
+== References
+
+* https://kueue.sigs.k8s.io/docs/tasks/manage/rbac/[Kueue: RBAC^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#rbac-permissions[Red Hat build of Kueue: Configuring Role-Based Permissions^]
+
+== Lab: Verify Admin Access
+
+=== 1. Log in as the admin user
+
+[source,console,subs="+quotes"]
+----
+$ **oc login -u admin -p <admin password> <cluster url>**
+Login successful
+....
+
+$ **oc whoami**
+admin
+----
+
+=== 2. View cluster-scoped Kueue resources (should succeed)
+
+a. View ClusterQueues:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueues**
+NAME                 COHORT   PENDING WORKLOADS
+a100-cluster-queue            0
+default                       0
+t4-cluster-queue              0
+----
+
+b. View ResourceFlavors:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get resourceflavors**
+NAME                AGE
+a100-gpu            27h
+default-flavor      32h
+nvidia-gpu-flavor   32h
+t4-gpu              27h
+----
+
+c. View WorkloadPriorityClasses:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get workloadpriorityclasses**
+NAME              VALUE
+high-priority     1000
+low-priority      100
+medium-priority   500
+----
+
+d. View LocalQueues across all namespaces:
++
+[source,console,subs="+quotes"]
+----
+$ **oc get localqueues -A**
+NAMESPACE        NAME              CLUSTERQUEUE         PENDING WORKLOADS   ADMITTED WORKLOADS
+inference-apps   default           default              0                   0
+inference-apps   inference-queue   t4-cluster-queue     0                   0
+training-jobs    default           default              0                   0
+training-jobs    training-queue    a100-cluster-queue   0                   0
+----
++
+All commands should succeed and return the resources created in earlier parts.
+
+=== 3. Modify Kueue resources (should succeed)
+
+The admin should be able to create, modify, and delete Kueue infrastructure.
+Use `oc auth can-i` to verify without actually changing the configuration:
+
+a. Verify the admin can create ClusterQueues:
++
+[source,console,subs="+quotes"]
+----
+$ **oc auth can-i create clusterqueues.kueue.x-k8s.io**
+Warning: resource 'clusterqueues' is not namespace scoped in group 'kueue.x-k8s.io'
+yes
+----
+
+b. Verify the admin can delete ResourceFlavors:
++
+[source,console,subs="+quotes"]
+----
+$ **oc auth can-i delete resourceflavors.kueue.x-k8s.io**
+Warning: resource 'resourceflavors' is not namespace scoped in group 'kueue.x-k8s.io'
+yes
+----
+
+c. Verify the admin can patch LocalQueues:
++
+[source,console,subs="+quotes"]
+----
+$ **oc auth can-i patch localqueues.kueue.x-k8s.io -n training-jobs**
+yes
+----
++
+TIP: The `Warning: resource is not namespace scoped` messages are normal.
+They appear because `oc auth can-i` defaults to checking namespace-scoped permissions, and ClusterQueues and ResourceFlavors are cluster-scoped resources.
+The warning is informational -- the `yes` or `no` answer is still correct.
+Notice the third command (`localqueues` with `-n training-jobs`) has no warning because LocalQueues are namespace-scoped.
+
+=== 4. Submit a job (should succeed)
+
+a. Submit the RBAC test Job to verify the admin can create workloads:
++
+[source,console,subs="+quotes"]
+----
+$ **oc apply -f workloads/job-rbac-test.yaml**
+job.batch/rbac-test-job created
+
+$ **oc get workloads -n training-jobs**
+NAME                      QUEUE            RESERVED IN          ADMITTED   FINISHED   AGE
+job-rbac-test-job-62c94   training-queue   a100-cluster-queue   True                  6s
+----
+
+b. Clean up the test job before proceeding to user tests:
++
+[source,console,subs="+quotes"]
+----
+$ **oc delete job rbac-test-job -n training-jobs**
+job.batch "rbac-test-job" deleted
+----

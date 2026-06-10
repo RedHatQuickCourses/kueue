@@ -1,0 +1,175 @@
+= Troubleshooting Fair Sharing
+:navtitle: Troubleshooting
+
+This section covers the most common issues encountered when configuring DRS fair sharing and admission fair sharing.
+
+== 1. Team B Jobs Are Pending but No Preemption Happens
+
+This is almost always caused by missing `reclaimWithinCohort: Any` on the ClusterQueues.
+Verify:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueue team-a-cluster-queue -o jsonpath='{.spec.preemption}' | python3 -m json.tool**
+$ **oc get clusterqueue team-b-cluster-queue -o jsonpath='{.spec.preemption}' | python3 -m json.tool**
+----
+
+If `reclaimWithinCohort` shows `Never` (or is missing), fair sharing DRS scores are computed but Kueue will not act on them.
+Fix by re-applying `10-fair-sharing.yaml` or patching:
+
+[source,console,subs="+quotes"]
+----
+$ **oc patch clusterqueue team-a-cluster-queue --type merge -p '{"spec":{"preemption":{"reclaimWithinCohort":"Any"}}}'**
+$ **oc patch clusterqueue team-b-cluster-queue --type merge -p '{"spec":{"preemption":{"reclaimWithinCohort":"Any"}}}'**
+----
+
+== 2. ClusterQueues Show Empty Status After Applying
+
+After applying `10-fair-sharing.yaml`, the ClusterQueues may briefly show an empty status if the Kueue controller was recently restarted.
+Wait 15-30 seconds for the controller to reconcile.
+If the status remains empty, annotate the CQ to trigger reconciliation:
+
+[source,console,subs="+quotes"]
+----
+$ **oc annotate clusterqueue team-a-cluster-queue reconcile=trigger --overwrite**
+----
+
+== 3. Kueue Controller Pods Are in CrashLoopBackOff
+
+Check the controller logs:
+
+[source,console,subs="+quotes"]
+----
+$ **oc logs -n openshift-kueue-operator -l app.kubernetes.io/name=kueue-controller-manager --tail=5**
+----
+
+If you see `strict decoding error: unknown field "fairSharing.enable"`, someone edited the `kueue-manager-config` ConfigMap directly and added `fairSharing.enable: true`.
+This field does not exist in the Red Hat Kueue v1.3.1 Configuration schema -- it is from a newer upstream version.
+
+To fix, scale down the operator, remove the invalid field, then scale back up:
+
+Scale down the operator so it stops reconciling the ConfigMap:
+
+[source,console,subs="+quotes"]
+----
+$ **oc scale deployment openshift-kueue-operator -n openshift-kueue-operator --replicas=0**
+----
+
+Get the current config, remove the invalid field, and replace:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get configmap kueue-manager-config -n openshift-kueue-operator -o json |** \
+  **python3 -c "**
+import json, sys
+cm = json.load(sys.stdin)
+config = cm['data']['controller_manager_config.yaml']
+config = config.replace('  enable: true\n', '')
+cm['data']['controller_manager_config.yaml'] = config
+json.dump(cm, sys.stdout)
+" | oc replace -f -
+----
+
+Restart the controller to pick up the fixed config:
+
+[source,console,subs="+quotes"]
+----
+$ **oc rollout restart deployment/kueue-controller-manager -n openshift-kueue-operator**
+$ **oc rollout status deployment/kueue-controller-manager -n openshift-kueue-operator --timeout=60s**
+----
+
+Scale the operator back up:
+
+[source,console,subs="+quotes"]
+----
+$ **oc scale deployment openshift-kueue-operator -n openshift-kueue-operator --replicas=2**
+----
+
+== 4. The `preemptionPolicy` Patch Was Accepted but Fair Sharing Still Doesn't Work
+
+Make sure you patched the correct Kueue resource.
+There are two:
+
+The correct resource (`kueue.openshift.io`):
+
+[source,console,subs="+quotes"]
+----
+$ **oc get kueue.kueue.openshift.io cluster -o jsonpath='{.spec.config.preemption}'**
+----
+
+The wrong resource (`components.platform.opendatahub.io`) -- it has no config field:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get kueue.components.platform.opendatahub.io default-kueue -o jsonpath='{.spec}'**
+----
+
+Also confirm the operator propagated the change to the controller ConfigMap:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get configmap kueue-manager-config -n openshift-kueue-operator** \
+  **-o jsonpath='{.data.controller_manager_config\.yaml}' | grep -A3 fairSharing**
+----
+
+You should see `preemptionStrategies` listed.
+If the `fairSharing` block is missing entirely, the operator may not have reconciled yet -- check its logs:
+
+[source,console,subs="+quotes"]
+----
+$ **oc logs -n openshift-kueue-operator -l app.kubernetes.io/name=openshift-kueue-operator --tail=10 | grep -i config**
+----
+
+== 5. `weightedShare` Values Look Wrong
+
+`weightedShare` is an integer scaled by 1000, not a float.
+A value of `334` means a DRS of 0.334, not 334 GPUs.
+A value of `0` means the queue is at or below its nominal quota.
+
+If you see unexpectedly high values, check whether a queue is over-borrowing:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get clusterqueues -o custom-columns='NAME:.metadata.name,ADMITTED:.status.admittedWorkloads,SHARE:.status.fairSharing.weightedShare,GPU_BORROWED:.status.flavorsReservation[0].resources[?(@.name=="nvidia.com/gpu")].borrowed'**
+----
+
+== 6. Admission Fair Sharing: Both Teams Get Admitted in FIFO Order
+
+Two possible causes:
+
+*Missing `admissionFairSharing` in the controller ConfigMap:*
+The feature gate `AdmissionFairSharing` is enabled by default, but the controller needs the `admissionFairSharing` config block to set up usage sampling.
+Check:
+
+[source,console,subs="+quotes"]
+----
+$ **oc get configmap kueue-manager-config -n openshift-kueue-operator** \
+  **-o jsonpath='{.data.controller_manager_config\.yaml}' | grep -A3 admissionFairSharing**
+----
+
+If empty, the operator stripped it.
+Scale the operator down and re-add the block (see xref:admission-fair-sharing.adoc#configure-admission-fs[Configure admission fair sharing]).
+
+*Workloads not pending simultaneously:*
+Admission ordering only matters when multiple workloads compete for the same slots.
+If the first workload is admitted before the second one is even created, there is no queue to reorder.
+Ensure all competing workloads exist as pending before GPU slots become available (see the round-1-then-round-2 pattern in xref:admission-fair-sharing.adoc#observe-admission-ordering[Observe admission ordering]).
+
+== 7. Admission Fair Sharing: `consumedResources` Is Empty in LocalQueue Status
+
+The `admissionFairSharingStatus` block only appears after the controller has sampled usage at least once.
+With `usageSamplingInterval: 5s`, this should happen within seconds.
+If it is empty, check the controller logs for errors:
+
+[source,console,subs="+quotes"]
+----
+$ **oc logs -n openshift-kueue-operator deploy/kueue-controller-manager --tail=5 | grep -i error**
+----
+
+If the controller crashed, check for `strict decoding error` -- the `admissionFairSharing` field may have a typo.
+
+=== References
+
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#fair-sharing[Kueue: Fair Sharing^]
+* https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#preemption[Kueue: Preemption^]
+* https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-fairsharing[Red Hat build of Kueue: Configuring Fair Sharing^]
