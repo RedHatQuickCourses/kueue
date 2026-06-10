@@ -1,8 +1,0 @@
-* xref:index.adoc[]
-** xref:enable-fair-sharing.adoc[]
-** xref:drs-setup.adoc[]
-** xref:drs-borrowing.adoc[]
-** xref:drs-preemption.adoc[]
-** xref:admission-fair-sharing.adoc[]
-** xref:troubleshooting.adoc[]
-** xref:cleanup.adoc[]

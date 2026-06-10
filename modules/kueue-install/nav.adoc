@@ -1,4 +1,0 @@
-* xref:index.adoc[]
-** xref:install-operator.adoc[]
-** xref:configure-operator.adoc[]
-** xref:verify-crds.adoc[]

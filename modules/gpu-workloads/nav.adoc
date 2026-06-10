@@ -1,4 +1,0 @@
-* xref:index.adoc[]
-** xref:fifo-jobs.adoc[]
-** xref:priority-jobs.adoc[]
-** xref:inference-deployment.adoc[]

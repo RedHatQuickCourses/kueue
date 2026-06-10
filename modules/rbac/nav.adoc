@@ -1,6 +1,0 @@
-* xref:index.adoc[]
-** xref:verify-roles.adoc[]
-** xref:apply-bindings.adoc[]
-** xref:test-admin.adoc[]
-** xref:test-user.adoc[]
-** xref:cleanup.adoc[]

@@ -1,2 +1,0 @@
-build:
-  command: bundle exec asciidoctor-pdf -r asciidoctor-tabs --trace

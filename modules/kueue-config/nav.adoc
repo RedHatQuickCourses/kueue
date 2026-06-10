@@ -1,7 +1,0 @@
-* xref:index.adoc[]
-** xref:namespaces.adoc[]
-** xref:resource-flavors.adoc[]
-** xref:cluster-queues.adoc[]
-** xref:local-queues.adoc[]
-** xref:priority-classes.adoc[]
-** xref:verify-config.adoc[]

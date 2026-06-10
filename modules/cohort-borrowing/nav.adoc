@@ -1,6 +1,0 @@
-* xref:index.adoc[]
-** xref:cohort-setup.adoc[]
-** xref:borrowing.adoc[]
-** xref:reclaim-failure.adoc[]
-** xref:reclaim-fix.adoc[]
-** xref:cleanup.adoc[]
