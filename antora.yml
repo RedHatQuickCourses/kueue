@@ -13,4 +13,3 @@ nav:
   - modules/mig/nav.adoc
   - modules/rbac/nav.adoc
   - modules/cluster-reset/nav.adoc
-  - modules/appendix/nav.adoc
