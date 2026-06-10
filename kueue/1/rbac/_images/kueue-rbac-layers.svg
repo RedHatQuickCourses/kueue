@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 580" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <linearGradient id="layer1Grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e3f2fd"/>
+      <stop offset="100%" stop-color="#bbdefb"/>
+    </linearGradient>
+    <linearGradient id="layer2Grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fce4ec"/>
+      <stop offset="100%" stop-color="#f8bbd0"/>
+    </linearGradient>
+    <linearGradient id="layer3Grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff3e0"/>
+      <stop offset="100%" stop-color="#ffe0b2"/>
+    </linearGradient>
+    <linearGradient id="badge1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#42a5f5"/>
+      <stop offset="100%" stop-color="#1565c0"/>
+    </linearGradient>
+    <linearGradient id="badge2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ef5350"/>
+      <stop offset="100%" stop-color="#c62828"/>
+    </linearGradient>
+    <linearGradient id="badge3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff9800"/>
+      <stop offset="100%" stop-color="#e65100"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="40" text-anchor="middle" font-size="28" font-weight="bold" fill="#202124">Where Do Permissions Come From?</text>
+  <text x="550" y="68" text-anchor="middle" font-size="18" fill="#5f6368">Three independent layers control what a batch user can do on RHOAI</text>
+
+  <!-- ========== LAYER 1: Kueue ClusterRoles ========== -->
+  <rect x="40" y="95" width="1020" height="140" rx="12" fill="url(#layer1Grad)" stroke="#1565c0" stroke-width="2" filter="url(#shadow)"/>
+
+  <!-- Badge -->
+  <rect x="60" y="108" width="280" height="30" rx="8" fill="url(#badge1)"/>
+  <text x="200" y="129" text-anchor="middle" font-size="16" font-weight="bold" fill="#fff">Layer 1: Kueue ClusterRoles</text>
+
+  <!-- Source -->
+  <text x="60" y="162" font-size="16" font-weight="bold" fill="#0d47a1">Source:</text>
+  <text x="140" y="162" font-size="16" fill="#37474f">Kueue operator (auto-created, you create the bindings)</text>
+
+  <!-- What it grants -->
+  <text x="60" y="190" font-size="16" font-weight="bold" fill="#0d47a1">Grants:</text>
+
+  <!-- Resource chips -->
+  <rect x="140" y="175" width="130" height="24" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+  <text x="205" y="192" text-anchor="middle" font-size="14" fill="#0d47a1">ClusterQueues</text>
+
+  <rect x="280" y="175" width="120" height="24" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+  <text x="340" y="192" text-anchor="middle" font-size="14" fill="#0d47a1">LocalQueues</text>
+
+  <rect x="410" y="175" width="110" height="24" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+  <text x="465" y="192" text-anchor="middle" font-size="14" fill="#0d47a1">Workloads</text>
+
+  <rect x="530" y="175" width="65" height="24" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+  <text x="562" y="192" text-anchor="middle" font-size="14" fill="#0d47a1">Jobs</text>
+
+  <rect x="605" y="175" width="120" height="24" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+  <text x="665" y="192" text-anchor="middle" font-size="14" fill="#0d47a1">PyTorchJobs</text>
+
+  <rect x="735" y="175" width="100" height="24" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+  <text x="785" y="192" text-anchor="middle" font-size="14" fill="#0d47a1">RayJobs ...</text>
+
+  <!-- Note -->
+  <text x="60" y="222" font-size="15" font-style="italic" fill="#546e7a">Scope depends on binding type: ClusterRoleBinding = cluster-wide, RoleBinding = namespace only</text>
+
+  <!-- ========== LAYER 2: RHOAI Defaults ========== -->
+  <rect x="40" y="255" width="1020" height="130" rx="12" fill="url(#layer2Grad)" stroke="#c62828" stroke-width="2" filter="url(#shadow)"/>
+
+  <!-- Badge -->
+  <rect x="60" y="268" width="300" height="30" rx="8" fill="url(#badge2)"/>
+  <text x="210" y="289" text-anchor="middle" font-size="16" font-weight="bold" fill="#fff">Layer 2: RHOAI Operator Defaults</text>
+
+  <!-- Source -->
+  <text x="60" y="322" font-size="16" font-weight="bold" fill="#b71c1c">Source:</text>
+  <text x="140" y="322" font-size="16" fill="#37474f">RHOAI operator (automatic, applies to ALL authenticated users)</text>
+
+  <!-- What it grants -->
+  <text x="60" y="350" font-size="16" font-weight="bold" fill="#b71c1c">Grants:</text>
+
+  <rect x="140" y="335" width="155" height="24" rx="6" fill="#fce4ec" stroke="#c62828" stroke-width="1"/>
+  <text x="217" y="352" text-anchor="middle" font-size="14" fill="#b71c1c">ResourceFlavors</text>
+
+  <rect x="305" y="335" width="220" height="24" rx="6" fill="#fce4ec" stroke="#c62828" stroke-width="1"/>
+  <text x="415" y="352" text-anchor="middle" font-size="14" fill="#b71c1c">WorkloadPriorityClasses</text>
+
+  <text x="545" y="352" font-size="15" fill="#546e7a">(full CRUD -- not just read-only!)</text>
+
+  <text x="60" y="375" font-size="15" font-style="italic" fill="#546e7a">You do NOT control this -- it exists regardless of your bindings</text>
+
+  <!-- ========== LAYER 3: OpenShift built-in ========== -->
+  <rect x="40" y="405" width="1020" height="130" rx="12" fill="url(#layer3Grad)" stroke="#e65100" stroke-width="2" filter="url(#shadow)"/>
+
+  <!-- Badge -->
+  <rect x="60" y="418" width="320" height="30" rx="8" fill="url(#badge3)"/>
+  <text x="220" y="439" text-anchor="middle" font-size="16" font-weight="bold" fill="#fff">Layer 3: OpenShift Built-in Roles</text>
+
+  <!-- Source -->
+  <text x="60" y="472" font-size="16" font-weight="bold" fill="#bf360c">Source:</text>
+  <text x="140" y="472" font-size="16" fill="#37474f">OpenShift `edit` ClusterRole (you create the RoleBinding)</text>
+
+  <!-- What it grants -->
+  <text x="60" y="500" font-size="16" font-weight="bold" fill="#bf360c">Grants:</text>
+
+  <rect x="140" y="485" width="65" height="24" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+  <text x="172" y="502" text-anchor="middle" font-size="14" fill="#bf360c">Pods</text>
+
+  <rect x="215" y="485" width="65" height="24" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+  <text x="247" y="502" text-anchor="middle" font-size="14" fill="#bf360c">Logs</text>
+
+  <rect x="290" y="485" width="80" height="24" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+  <text x="330" y="502" text-anchor="middle" font-size="14" fill="#bf360c">Events</text>
+
+  <rect x="380" y="485" width="115" height="24" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+  <text x="437" y="502" text-anchor="middle" font-size="14" fill="#bf360c">ConfigMaps</text>
+
+  <rect x="505" y="485" width="105" height="24" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1"/>
+  <text x="557" y="502" text-anchor="middle" font-size="14" fill="#bf360c">Secrets ...</text>
+
+  <text x="60" y="525" font-size="15" font-style="italic" fill="#546e7a">Without this layer, users can submit Jobs but cannot run `oc get pods` or `oc logs`</text>
+
+  <!-- Bottom summary -->
+  <rect x="40" y="548" width="1020" height="28" rx="6" fill="#f5f5f5" stroke="#9e9e9e" stroke-width="1"/>
+  <text x="550" y="567" text-anchor="middle" font-size="15" font-weight="bold" fill="#424242">When something is unexpectedly allowed or denied, ask: which layer is granting or blocking this?</text>
+</svg>

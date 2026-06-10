@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>MIG Partitioning and Preemption :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="prev" href="../fair-sharing/cleanup.html">
+    <link rel="next" href="mig-faker-fix.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../LABENV/index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../gpu-workloads/index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../fair-sharing/index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item is-current-page" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../rbac/index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">MIG</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">MIG Partitioning and Preemption</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>NVIDIA Multi-Instance GPU (MIG) is a hardware feature on A100 and H100 GPUs that partitions a single physical GPU into multiple isolated GPU instances.
+Each instance has its own compute resources, memory, and memory bandwidth&#8201;&#8212;&#8201;completely isolated from the others, like separate physical GPUs.</p>
+</div>
+<div class="paragraph">
+<p>In this chapter, you partition one of the four A100 GPUs on worker-1 into three MIG instances of different sizes, while leaving the other three GPUs as whole devices.
+This is called <strong>mixed mode</strong>&#8201;&#8212;&#8201;some GPUs are MIG-partitioned, others remain whole.
+You then configure Kueue to manage MIG resources alongside whole GPUs, submit workloads targeting specific MIG profiles, and exercise priority preemption within MIG slots.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_understanding_mig_hardware_level_gpu_partitioning"><a class="anchor" href="#_understanding_mig_hardware_level_gpu_partitioning"></a>Understanding MIG: Hardware-Level GPU Partitioning</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_why_mig_exists"><a class="anchor" href="#_why_mig_exists"></a>Why MIG exists</h3>
+<div class="paragraph">
+<p>Without MIG, a GPU is an all-or-nothing resource.
+If a developer needs only 5 GiB of VRAM for a small inference job, they still consume the entire 40 GiB A100.
+The other 35 GiB sits idle, and no other workload can use the GPU until the first one finishes.</p>
+</div>
+<div class="paragraph">
+<p>MIG solves this by slicing the GPU silicon itself into smaller, fully independent GPU instances.
+Each instance behaves as if it were a separate physical GPU&#8201;&#8212;&#8201;with its own compute engines, its own memory, and its own memory bandwidth.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_mig_vs_vm_virtualization"><a class="anchor" href="#_mig_vs_vm_virtualization"></a>MIG vs VM virtualization</h3>
+<div class="paragraph">
+<p>If you have experience with CPU virtualization, MIG is the closest GPU equivalent&#8201;&#8212;&#8201;but stronger.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 37.5%;">
+<col style="width: 37.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">VM Virtualization (CPU)</th>
+<th class="tableblock halign-left valign-top">MIG (GPU)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Isolation mechanism</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hypervisor software + hardware assist (VT-x/VT-d)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Physical silicon-level fences in the GPU die</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Memory isolation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hypervisor manages page tables; software-enforced</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Dedicated memory slices with separate memory controllers; hardware-enforced</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Compute isolation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CPU time-slicing via hypervisor scheduler</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Dedicated Streaming Multiprocessors (SMs); no time-sharing</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Error isolation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A crash in one VM does not affect others</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A crash in one MIG instance does not affect others</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Performance isolation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Can experience "noisy neighbor" effects</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No noisy neighbor&#8201;&#8212;&#8201;each instance has guaranteed bandwidth</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Overhead</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Small hypervisor overhead</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Zero overhead&#8201;&#8212;&#8201;no software layer between workload and silicon</p></td>
+</tr>
+</tbody>
+</table>
+<div class="imageblock">
+<div class="content">
+<img src="_images/mig-vs-timeslicing.svg" alt="MIG vs Time-Slicing vs VM Virtualization" width="1000">
+</div>
+</div>
+<div class="paragraph">
+<p>The key distinction: VM virtualization uses a <strong>software layer</strong> (the hypervisor) to divide resources, while MIG uses <strong>physical fences baked into the GPU silicon</strong>.
+A MIG instance is not a virtual GPU&#8201;&#8212;&#8201;it is a physically separate section of the chip with its own memory controllers and compute engines.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>MIG vs time-slicing</strong></p>
+</div>
+<div class="paragraph">
+<p>Time-slicing is a simpler alternative where the NVIDIA driver rapidly context-switches multiple workloads on the same GPU.
+All workloads share the same 40 GiB memory pool with no fences between them.
+If one workload allocates too much VRAM, it can OOM-crash every other workload on the same GPU.
+Time-slicing is useful for development and notebooks, but MIG is required when workloads need guaranteed resources and fault isolation.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_inside_the_a100_compute_slices_and_memory_slices"><a class="anchor" href="#_inside_the_a100_compute_slices_and_memory_slices"></a>Inside the A100: Compute slices and memory slices</h3>
+<div class="paragraph">
+<p>To understand MIG profiles, you must understand the physical layout of the GPU die.
+The A100 40GB contains two types of building blocks:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Compute slices</strong> (also called GPU slices or GPC slices): Each contains approximately 14 Streaming Multiprocessors (SMs), which are the actual processors that execute CUDA kernels.</p>
+</li>
+<li>
+<p><strong>Memory slices</strong>: Each provides 5 GiB of HBM2e VRAM and a dedicated memory controller with its own bandwidth.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The A100 40GB has <strong>7 compute slices</strong> and <strong>8 memory slices</strong>.
+This asymmetry is intentional&#8201;&#8212;&#8201;NVIDIA designed the chip with one extra memory slice so that larger MIG profiles can receive bonus memory.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="_images/mig-hardware-layout.svg" alt="A100 GPU Hardware Layout" width="1000">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_reading_mig_profile_names"><a class="anchor" href="#_reading_mig_profile_names"></a>Reading MIG profile names</h3>
+<div class="paragraph">
+<p>MIG profile names follow the format <strong>Xg.Ygb</strong>, where:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Xg</strong> = the number of <strong>compute slices</strong> (GPU slices) allocated to the instance. This determines processing power&#8201;&#8212;&#8201;how many SMs are available.</p>
+</li>
+<li>
+<p><strong>Ygb</strong> = the <strong>gigabytes of memory</strong> allocated. This determines VRAM&#8201;&#8212;&#8201;how large a model can be loaded.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For example, <code>3g.20gb</code> means: 3 compute slices (approximately 42 SMs) and 20 GiB of VRAM (4 memory slices).</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>The memory number is not always a simple multiple of the compute number.
+Because the A100 has 8 memory slices but only 7 compute slices, larger profiles receive a bonus memory slice.
+This is why <code>3g</code> gets 20 GiB (4 memory slices) instead of 15 GiB (3 memory slices).</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_available_mig_profiles_on_the_a100_40gb"><a class="anchor" href="#_available_mig_profiles_on_the_a100_40gb"></a>Available MIG profiles on the A100 40GB</h3>
+<div class="imageblock">
+<div class="content">
+<img src="_images/mig-profiles.svg" alt="MIG Profile Examples" width="1000">
+</div>
+</div>
+<div class="paragraph">
+<p>The following table lists all supported MIG profiles for the A100 40GB:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 37.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Profile</th>
+<th class="tableblock halign-left valign-top">Compute slices</th>
+<th class="tableblock halign-left valign-top">Memory slices</th>
+<th class="tableblock halign-left valign-top">VRAM</th>
+<th class="tableblock halign-left valign-top">Typical use case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>1g.5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Small inference, unit tests, CI/CD validation</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>1g.10gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Memory-heavy tasks with minimal compute (A100 80GB only)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>2g.10gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Medium models, batch inference, data preprocessing</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>3g.20gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">20 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Training, large inference, production serving</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>4g.20gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">20 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Larger training jobs that need more SMs (A100 80GB only)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>7g.40gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">40 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Full GPU&#8201;&#8212;&#8201;equivalent to no MIG (useful for testing)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Not all profiles are available on all GPU models.
+The A100 40GB supports <code>1g.5gb</code>, <code>2g.10gb</code>, <code>3g.20gb</code>, and <code>7g.40gb</code>.
+The A100 80GB and H100 80GB offer additional profiles like <code>1g.10gb</code>, <code>1g.20gb</code>, and <code>4g.40gb</code> because they have 10 GiB memory slices instead of 5 GiB.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fitting_mig_slices_together_placement_rules"><a class="anchor" href="#_fitting_mig_slices_together_placement_rules"></a>Fitting MIG slices together: Placement rules</h3>
+<div class="paragraph">
+<p>MIG slices must fit together like Tetris blocks.
+You cannot mix any arbitrary combination&#8201;&#8212;&#8201;the profiles must add up to exactly 7 compute slices and 8 memory slices (on the A100 40GB).</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Valid partition combinations for the A100 40GB</caption>
+<colgroup>
+<col style="width: 42.8571%;">
+<col style="width: 28.5714%;">
+<col style="width: 28.5715%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Combination</th>
+<th class="tableblock halign-left valign-top">Compute used</th>
+<th class="tableblock halign-left valign-top">Memory used</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1x <code>7g.40gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7 of 7</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">40 of 40 GiB</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1x <code>3g.20gb</code> + 1x <code>2g.10gb</code> + 2x <code>1g.5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7 of 7 (3+2+1+1)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">40 of 40 GiB (20+10+5+5)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1x <code>3g.20gb</code> + 4x <code>1g.5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7 of 7 (3+1+1+1+1)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">40 of 40 GiB (20+5+5+5+5)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3x <code>2g.10gb</code> + 1x <code>1g.5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7 of 7 (2+2+2+1)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">35 of 40 GiB (10+10+10+5)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7x <code>1g.5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7 of 7</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">35 of 40 GiB</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Some combinations waste memory.
+Seven <code>1g.5gb</code> instances use all 7 compute slices but only 35 of 40 GiB of memory&#8201;&#8212;&#8201;the 8th memory slice is stranded with no compute slice to pair with.
+For maximum utilization, include at least one profile at <code>3g</code> or larger to absorb the bonus memory slice.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="_images/mig-partitioned-gpu.svg" alt="Fully Partitioned A100" width="1000">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_this_labs_partition_layout"><a class="anchor" href="#_this_labs_partition_layout"></a>This lab&#8217;s partition layout</h3>
+<div class="paragraph">
+<p>In this chapter, you partition GPU 0 on worker-1 into the combination <code>3g.20gb</code> + <code>2g.10gb</code> + <code>1g.5gb</code>.
+This uses 6 of 7 compute slices and 35 of 40 GiB of memory, leaving one compute slice and one memory slice unused.
+GPUs 1-3 remain as whole devices.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_mig_produces"><a class="anchor" href="#_what_mig_produces"></a>What MIG Produces</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>After partitioning GPU 0 into MIG slices, worker-1 reports:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 16.6666%;">
+<col style="width: 50.0001%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Resource</th>
+<th class="tableblock halign-left valign-top">Count</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/gpu</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GPUs 1-3 remain whole (was 4 before MIG)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/mig-3g.20gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3 compute slices, 20 GiB memory</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/mig-2g.10gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2 compute slices, 10 GiB memory</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/mig-1g.5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 compute slice, 5 GiB memory</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Pods request MIG instances by resource type (e.g., <code>nvidia.com/mig-3g.20gb: 1</code>) instead of <code>nvidia.com/gpu</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_the_fake_gpu_operator_implements_mig"><a class="anchor" href="#_how_the_fake_gpu_operator_implements_mig"></a>How the Fake GPU Operator Implements MIG</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <a href="https://github.com/run-ai/fake-gpu-operator" target="_blank" rel="noopener">fake GPU operator</a> simulates MIG without real NVIDIA hardware.
+It uses two components that work together:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>mig-faker DaemonSet</strong>: Runs on each GPU node and watches for MIG configuration changes.
+When you annotate a node with <code>run.ai/mig.config</code>, the mig-faker validates the requested MIG profiles, generates synthetic device UUIDs for each MIG instance, and writes them back as a <code>run.ai/mig-mapping</code> annotation.
+It also sets the <code>nvidia.com/mig.config.state=success</code> label to signal that partitioning succeeded.
+The mig-faker has hardcoded GPU Instance ID tables for A100 40GB and A100 80GB models, mapping profile names like <code>3g.20gb</code> to the correct GPU Instance IDs that real NVIDIA drivers would produce.</p>
+</li>
+<li>
+<p><strong>device-plugin DaemonSet</strong>: Registers GPU resources with kubelet.
+For whole GPUs, it advertises <code>nvidia.com/gpu</code>.
+For MIG, it reads the <code>otherDevices</code> section of the node&#8217;s topology ConfigMap and registers each MIG profile as a separate resource type (e.g., <code>nvidia.com/mig-3g.20gb</code>).</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The gap between these two components is the reason Stage 3 below is manual: the mig-faker writes annotations, but the device-plugin reads the topology ConfigMap.
+Nothing in the fake GPU operator bridges the two automatically.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_whats_already_automated"><a class="anchor" href="#_whats_already_automated"></a>What&#8217;s Already Automated</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The Helm chart (<code>helm-charts/fake-gpu-operator/values-ocp.yaml</code>) already sets <code>migStrategy: mixed</code>.
+This tells the fake GPU operator to support MIG alongside whole GPUs.
+<strong>No Helm upgrade is needed</strong>&#8201;&#8212;&#8201;the operator is already MIG-ready.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml"># Already set in values-ocp.yaml (no action needed)
+topology:
+  migStrategy: mixed</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_mig_processing_pipeline"><a class="anchor" href="#_mig_processing_pipeline"></a>MIG Processing Pipeline</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>MIG partitioning in the fake GPU operator requires <strong>three stages</strong>.
+This mirrors the real-world workflow (node annotation + operator processing) but with an extra manual step because the device-plugin doesn&#8217;t automatically update allocatable resources from MIG annotations.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="_images/mig-processing-pipeline.svg" alt="MIG Processing Pipeline" width="1000">
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="title">Why is Stage 3 manual?</div>
+<div class="paragraph">
+<p>In a real NVIDIA GPU Operator, the device-plugin natively understands MIG and advertises MIG resources to kubelet automatically.
+The fake GPU operator&#8217;s device-plugin is simpler&#8201;&#8212;&#8201;it only reads the topology ConfigMap.
+The mig-faker correctly processes the annotation but nothing bridges the gap to update the ConfigMap.
+This is a known limitation of the fake GPU operator, not a bug in your configuration.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_automated_vs_manual_summary"><a class="anchor" href="#_automated_vs_manual_summary"></a>Automated vs Manual Summary</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 42.8572%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Item</th>
+<th class="tableblock halign-left valign-top">Automated / Manual</th>
+<th class="tableblock halign-left valign-top">Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>migStrategy: mixed</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Automated</strong> (in Helm values)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Already set&#8201;&#8212;&#8201;no upgrade needed</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">mig-faker toleration fix</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Manual, one-time</strong> (Step 35)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Patch DaemonSet to tolerate GPU taint (Helm chart bug)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Node MIG annotation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Manual</strong> (Steps 36-37)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Edit node name in <code>6a-mig-node-config.yaml</code>, then <code>oc apply</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">mig-faker processing</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Automated</strong> (Step 37a)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DaemonSet watches annotation, sets success label</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Topology ConfigMap update</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Manual</strong> (Step 37b)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Edit node name/UUIDs in <code>6b-mig-topology-update.yaml</code>, then <code>oc apply</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Device-plugin restart</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Manual</strong> (Step 37c)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Delete device-plugin pod so it re-reads the ConfigMap</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Update whole-GPU quota</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Manual</strong> (Step 39)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Patch <code>a100-cluster-queue</code> from 4 to 3 GPUs</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MIG Kueue resources</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Manual</strong> (Steps 40-42)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>oc apply</code> the three YAML files</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect2">
+<h3 id="_references"><a class="anchor" href="#_references"></a>References</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.nvidia.com/datacenter/tesla/mig-user-guide/" target="_blank" rel="noopener">NVIDIA: Multi-Instance GPU User Guide</a></p>
+</li>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/resource_flavor/" target="_blank" rel="noopener">Kueue: ResourceFlavor</a></p>
+</li>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/" target="_blank" rel="noopener">Kueue: ClusterQueue</a></p>
+</li>
+<li>
+<p><a href="https://github.com/run-ai/fake-gpu-operator" target="_blank" rel="noopener">Fake GPU Operator</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-resourceflavors_configuring-quotas" target="_blank" rel="noopener">Red Hat build of Kueue: Configuring Resource Flavors</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-quotas" target="_blank" rel="noopener">Red Hat build of Kueue: Configuring Quotas</a></p>
+</li>
+</ul>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="title">MIG on Real vs Fake Hardware</div>
+<div class="paragraph">
+<p>On real NVIDIA hardware with the NVIDIA GPU Operator, MIG partitioning is fully automated: the GPU operator&#8217;s device-plugin reads MIG configuration from the GPU driver and advertises MIG resource types to kubelet.
+In this lab, you perform the extra manual steps (topology ConfigMap update, device-plugin restart) because the fake GPU operator simulates GPU resources without actual hardware.
+The Kueue configuration (ResourceFlavors, ClusterQueues, LocalQueues) is identical in both cases&#8201;&#8212;&#8201;Kueue doesn&#8217;t know or care whether the GPUs are real or simulated.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="../fair-sharing/cleanup.html">Clean Up</a></span>
+  <span class="next"><a href="mig-faker-fix.html">mig-faker Fix</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script defer src="../../../_/js/vendor/tabs.js"></script>
+<script defer src="../../../_/js/vendor/reading-time.js"></script>
+  </body>
+</html>

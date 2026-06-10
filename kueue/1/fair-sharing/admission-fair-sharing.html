@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Admission Fair Sharing :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="prev" href="drs-preemption.html">
+    <link rel="next" href="troubleshooting.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../LABENV/index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../gpu-workloads/index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../mig/index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../rbac/index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">Fair Sharing</a></li>
+    <li><a href="admission-fair-sharing.html">Admission Fair Sharing</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Admission Fair Sharing</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The DRS fair sharing exercises demonstrated proportional preemption <em>between</em> ClusterQueues in a cohort.
+But what if both teams share the <strong>same</strong> ClusterQueue?</p>
+</div>
+<div class="paragraph">
+<p><strong>Admission Fair Sharing</strong> solves this.
+It tracks historical resource usage per LocalQueue and orders pending workloads so the team that consumed fewer resources gets admitted first.
+Unlike DRS fair sharing, there is no preemption&#8201;&#8212;&#8201;this is purely an <strong>admission ordering</strong> mechanism that decides <em>who goes next</em> when GPU slots free up.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_concepts"><a class="anchor" href="#_concepts"></a>Concepts</h2>
+<div class="sectionbody">
+<div class="imageblock">
+<div class="content">
+<img src="_images/admission-fair-sharing.svg" alt="Admission Fair Sharing - Kueue admits the LocalQueue with the lowest historical usage first" width="800">
+</div>
+</div>
+<div class="sect2">
+<h3 id="_key_differences_from_drs_fair_sharing"><a class="anchor" href="#_key_differences_from_drs_fair_sharing"></a>Key Differences from DRS Fair Sharing</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 40%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"></th>
+<th class="tableblock halign-left valign-top">DRS Fair Sharing</th>
+<th class="tableblock halign-left valign-top">Admission Fair Sharing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Scope</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Between ClusterQueues in a cohort</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Within a single ClusterQueue, across LocalQueues</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Mechanism</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Preempts running workloads</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Orders pending workloads at admission time</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Metric</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Current <code>weightedShare</code> (DRS)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Historical <code>consumedResources</code> per LocalQueue</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Configuration</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>preemptionPolicy: FairSharing</code> on Kueue CR + <code>fairSharing.weight</code> on CQ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>admissionScope</code> on CQ + <code>admissionFairSharing</code> in controller ConfigMap</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Use case</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Separate teams with separate quotas that need proportional preemption</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sub-teams sharing a single quota that need fair admission ordering</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_how_it_works"><a class="anchor" href="#_how_it_works"></a>How It Works</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Kueue samples each LocalQueue&#8217;s resource consumption at a configurable interval (<code>usageSamplingInterval</code>)</p>
+</li>
+<li>
+<p>Historical usage decays exponentially over time&#8201;&#8212;&#8201;the <code>usageHalfLifeTime</code> controls how fast usage is "forgotten" (e.g., after 10 minutes at half-life, 50% of the usage record is gone)</p>
+</li>
+<li>
+<p>When GPU slots become available and multiple workloads are pending, Kueue admits workloads from the LocalQueue with the <strong>lowest accumulated usage</strong> first</p>
+</li>
+<li>
+<p>An <strong>entry penalty</strong> is applied immediately on admission&#8201;&#8212;&#8201;this prevents a team from submitting a burst of 100 jobs simultaneously and having them all admitted before usage stats update</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_references"><a class="anchor" href="#_references"></a>References</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/" target="_blank" rel="noopener">Kueue: ClusterQueue</a></p>
+</li>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/local_queue/" target="_blank" rel="noopener">Kueue: LocalQueue</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-fairsharing" target="_blank" rel="noopener">Red Hat build of Kueue: Configuring Fair Sharing</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-quotas" target="_blank" rel="noopener">Red Hat build of Kueue: Configuring Quotas</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_lab_configure_and_demonstrate_admission_fair_sharing"><a class="anchor" href="#_lab_configure_and_demonstrate_admission_fair_sharing"></a>Lab: Configure and Demonstrate Admission Fair Sharing</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="configure-admission-fs"><a class="anchor" href="#configure-admission-fs"></a>1. Configure admission fair sharing</h3>
+<div class="sidebarblock">
+<div class="content">
+<div class="title">Why Scale Down the Operator?</div>
+<div class="paragraph">
+<p>Admission Fair Sharing is a first-class feature in upstream Kueue&#8201;&#8212;&#8201;you configure it in the controller ConfigMap (or via Helm values) and it works out of the box.
+On <strong>OpenShift AI</strong>, however, the Red Hat Kueue operator manages the ConfigMap by reconciling it from the <code>kueue.openshift.io/v1</code> CRD.
+Since the CRD schema does not yet include <code>admissionFairSharing</code>, the operator strips it from the ConfigMap within seconds of any manual edit.</p>
+</div>
+<div class="paragraph">
+<p>There are two separate deployments involved&#8201;&#8212;&#8201;do not confuse them:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Deployment</th>
+<th class="tableblock halign-left valign-top">Role</th>
+<th class="tableblock halign-left valign-top">What We Do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>openshift-kueue-operator</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Operator</strong>&#8201;&#8212;&#8201;reconciles CRD &#8594; ConfigMap</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Scale to 0 to stop it from reverting our ConfigMap edit</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>kueue-controller-manager</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Controller</strong>&#8201;&#8212;&#8201;runs Kueue (leader-elected, multiple replicas)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Leave running. All replicas read the same ConfigMap. Admission fair sharing works with any replica count.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>In production</strong>, until Red Hat surfaces <code>admissionFairSharing</code> in the CRD:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Manage the ConfigMap via GitOps and pin it (e.g., ArgoCD <code>ignoreDifferences</code>) so the operator cannot revert it</p>
+</li>
+<li>
+<p>Or keep the operator scaled down and manage Kueue config declaratively yourself</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This is a "feature ahead of the operator" situation, not a fundamental limitation of Kueue.</p>
+</div>
+</div>
+</div>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Scale down the Kueue operator to prevent it from overwriting the ConfigMap:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc scale deployment openshift-kueue-operator -n openshift-kueue-operator --replicas=0</strong>
+deployment.apps/openshift-kueue-operator scaled</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify the operator pods are gone:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n openshift-kueue-operator -l app.kubernetes.io/name=openshift-kueue-operator --no-headers</strong>
+No resources found in openshift-kueue-operator namespace.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Expected output&#8201;&#8212;&#8201;no pods listed (or all <code>Terminating</code>).
+If operator pods are still <code>Running</code>, wait a few seconds and re-check.</p>
+</div>
+</li>
+<li>
+<p>Extract the current config and add the <code>admissionFairSharing</code> block:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get configmap kueue-manager-config -n openshift-kueue-operator</strong> \
+  <strong>-o jsonpath='{.data.controller_manager_config\.yaml}' &gt; /tmp/kueue-config-afs.yaml</strong></code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Add the <code>admissionFairSharing</code> block.
+Insert it before the existing <code>fairSharing:</code> line in <code>/tmp/kueue-config-afs.yaml</code>:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>sed -i.bak '/^fairSharing:/i</strong> \
+<strong>admissionFairSharing:</strong> \
+  <strong>usageHalfLifeTime: 10m</strong> \
+  <strong>usageSamplingInterval: 5s' /tmp/kueue-config-afs.yaml</strong></code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify the edit:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>grep -A2 admissionFairSharing /tmp/kueue-config-afs.yaml</strong>
+admissionFairSharing:
+  usageHalfLifeTime: 10m
+  usageSamplingInterval: 5s</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+We use a short <code>usageHalfLifeTime</code> (10 minutes) and fast <code>usageSamplingInterval</code> (5 seconds) so results are visible within the lab timeframe.
+In production, use <code>168h</code> (1 week) and <code>5m</code> respectively&#8201;&#8212;&#8201;this matches the upstream defaults and avoids overloading the controller with frequent sampling.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Apply the updated ConfigMap and restart the controller:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc create configmap kueue-manager-config -n openshift-kueue-operator</strong> \
+  <strong>--from-file=controller_manager_config.yaml=/tmp/kueue-config-afs.yaml</strong> \
+  <strong>--dry-run=client -o yaml | oc replace -f -</strong>
+configmap/kueue-manager-config replaced
+
+$ <strong>oc rollout restart deployment/kueue-controller-manager -n openshift-kueue-operator</strong>
+deployment.apps/kueue-controller-manager restarted
+
+$ <strong>oc rollout status deployment/kueue-controller-manager -n openshift-kueue-operator --timeout=60s</strong>
+deployment "kueue-controller-manager" successfully rolled out</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify the controller pod is running (not in <code>CrashLoopBackOff</code>):</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n openshift-kueue-operator -l control-plane=controller-manager</strong>
+NAME                                       READY   STATUS    RESTARTS   AGE
+kueue-controller-manager-985456b49-69mdr   1/1     Running   0          18s
+kueue-controller-manager-985456b49-lgw7w   1/1     Running   0          18s</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you see <code>CrashLoopBackOff</code> instead of <code>Running</code>, check the logs:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc logs -n openshift-kueue-operator deploy/kueue-controller-manager --tail=5</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A <code>strict decoding error</code> means a field name was misspelled.
+The field must be exactly <code>admissionFairSharing</code> (not <code>admissionFairsharing</code> or <code>admission_fair_sharing</code>).
+Fix the YAML in <code>/tmp/kueue-config-afs.yaml</code> and re-apply.</p>
+</div>
+</li>
+<li>
+<p>Review <code>kueue-config/10a-admission-fair-sharing.yaml</code> before applying.
+Unlike DRS fair sharing (which uses two ClusterQueues in a cohort), admission fair sharing uses a <strong>single</strong> ClusterQueue with two LocalQueues:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: shared-gpu-queue
+spec:
+  admissionScope:
+    admissionMode: UsageBasedAdmissionFairSharing      <i class="conum" data-value="1"></i><b>(1)</b>
+  resourceGroups:
+  - coveredResources: ["cpu", "memory", "nvidia.com/gpu"]
+    flavors:
+    - name: a100-gpu
+      resources:
+      - name: nvidia.com/gpu
+        nominalQuota: 2                                <i class="conum" data-value="2"></i><b>(2)</b>
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: research-queue
+  namespace: training-jobs                             <i class="conum" data-value="3"></i><b>(3)</b>
+spec:
+  clusterQueue: shared-gpu-queue
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: production-queue
+  namespace: training-jobs                             <i class="conum" data-value="3"></i><b>(3)</b>
+spec:
+  clusterQueue: shared-gpu-queue</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>UsageBasedAdmissionFairSharing</code> enables usage-based admission ordering. Kueue tracks historical <code>consumedResources</code> per LocalQueue and admits the queue with the lowest accumulated usage first. No preemption&#8201;&#8212;&#8201;this only affects admission <strong>ordering</strong>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Both teams share the same 2-GPU quota. Unlike DRS fair sharing, there is no per-team quota split.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Both LocalQueues are in the <strong>same</strong> namespace (<code>training-jobs</code>) and point to the same ClusterQueue. The queue name in the Job&#8217;s label determines which LocalQueue&#8217;s usage counter is charged.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Apply the configuration:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f kueue-config/10a-admission-fair-sharing.yaml</strong>
+clusterqueue.kueue.x-k8s.io/shared-gpu-queue created
+localqueue.kueue.x-k8s.io/research-queue created
+localqueue.kueue.x-k8s.io/production-queue created</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify the ClusterQueue is active with admission fair sharing enabled:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get clusterqueue shared-gpu-queue</strong> \
+  <strong>-o custom-columns='NAME:.metadata.name,STATUS:.status.conditions[?(@.type=="Active")].status,SCOPE:.spec.admissionScope.admissionMode'</strong>
+NAME               STATUS   SCOPE
+shared-gpu-queue   True     UsageBasedAdmissionFairSharing</code></pre>
+</div>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+The <code>openshift-kueue-operator</code> actively reconciles the <code>kueue-manager-config</code> ConfigMap.
+If the operator is running, it will strip the <code>admissionFairSharing</code> block within seconds.
+Keep it scaled down for the duration of this exercise.
+It will be scaled back up during the <a href="#cleanup-admission-fs">cleanup step</a> at the end of this page.
+</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_2_submit_round_1_and_round_2"><a class="anchor" href="#_2_submit_round_1_and_round_2"></a>2. Submit round 1 and round 2</h3>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Review <code>workloads/job-admission-fs-round1.yaml</code> before applying.
+Both jobs follow the same pattern&#8201;&#8212;&#8201;here is one representative Job:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: batch/v1
+kind: Job
+metadata:
+  name: research-round1-job-1
+  namespace: training-jobs
+  labels:
+    kueue.x-k8s.io/queue-name: research-queue          <i class="conum" data-value="1"></i><b>(1)</b>
+spec:
+  suspend: true
+  template:
+    spec:
+      containers:
+      - name: training-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        args:
+        - |
+          END=$((SECONDS+300))                         <i class="conum" data-value="2"></i><b>(2)</b>
+          while [ $SECONDS -lt $END ]; do
+            nvidia-smi; sleep 5
+          done
+        resources:
+          requests:
+            nvidia.com/gpu: "1"                        <i class="conum" data-value="3"></i><b>(3)</b>
+          limits:
+            nvidia.com/gpu: "1"</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <code>queue-name</code> label routes this job to <code>research-queue</code>. Kueue charges this LocalQueue&#8217;s <code>consumedResources</code> counter while the job runs. This is the usage history that drives admission ordering.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>5-minute duration&#8201;&#8212;&#8201;this gives you enough time to submit round 2, check usage statistics, and observe the admission ordering when round 1 completes.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Each job requests 1 GPU. Two jobs fill the entire 2-GPU quota of <code>shared-gpu-queue</code>.
+<div class="paragraph">
+<p>The round 2 file (<code>job-admission-fs-round2.yaml</code>) contains 4 jobs: 2 Research + 2 Production.
+They are identical to round 1 except for the <code>queue-name</code> label&#8201;&#8212;&#8201;production jobs use <code>production-queue</code> instead of <code>research-queue</code>.</p>
+</div></td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Submit round 1 (2 research jobs that fill both GPU slots):</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f workloads/job-admission-fs-round1.yaml</strong>
+job.batch/research-round1-job-1 created
+job.batch/research-round1-job-2 created</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify both jobs are admitted and running:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n training-jobs -o wide</strong>
+NAME                          READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+research-round1-job-1-zmd7r   1/1     Running   0          9s    10.235.0.62   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+research-round1-job-2-tjdqh   1/1     Running   0          9s    10.235.0.63   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Submit round 2 immediately while round 1 is still running.
+Both GPU slots are occupied, so all 4 round-2 jobs will land in the pending queue:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f workloads/job-admission-fs-round2.yaml</strong>
+job.batch/research-round2-job-1 created
+job.batch/research-round2-job-2 created
+job.batch/production-round2-job-1 created
+job.batch/production-round2-job-2 created</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify the ClusterQueue shows 2 admitted (round 1) and 4 pending (round 2):</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get clusterqueue shared-gpu-queue</strong> \
+  <strong>-o custom-columns='NAME:.metadata.name,ADMITTED:.status.admittedWorkloads,PENDING:.status.pendingWorkloads'</strong>
+NAME               ADMITTED   PENDING
+shared-gpu-queue   2          4</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="observe-admission-ordering"><a class="anchor" href="#observe-admission-ordering"></a>3. Observe admission ordering</h3>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>While round 1 is running, check the accumulated usage for each LocalQueue:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get localqueue research-queue -n training-jobs</strong> \
+  <strong>-o jsonpath='{.metadata.name}{": "}{.status.fairSharing.admissionFairSharingStatus.consumedResources}{"\n"}'</strong>
+<strong>research-queue: {"cpu":"0","memory":"280792871461m","nvidia.com/gpu":"0"}</strong>
+
+$ <strong>oc get localqueue production-queue -n training-jobs</strong> \
+  <strong>-o jsonpath='{.metadata.name}{": "}{.status.fairSharing.admissionFairSharingStatus.consumedResources}{"\n"}'</strong>
+<strong>production-queue: {"cpu":"0","memory":"0","nvidia.com/gpu":"0"}</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>research-queue</code> has non-zero usage (from running round 1).
+<code>production-queue</code> has all zeros (it has never run any jobs).
+This difference is what Kueue uses to decide admission ordering when round 1 completes.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The <code>consumedResources</code> values are accumulated resource-time integrals (resource x time x samples), not instantaneous usage&#8201;&#8212;&#8201;that is why the memory number looks large.
+These values decay exponentially based on <code>usageHalfLifeTime</code> (10 minutes in this lab).
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Wait for round 1 to complete (~5 minutes)&#8201;&#8212;&#8201;this frees both GPU slots:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc wait --for=condition=complete job/research-round1-job-1 job/research-round1-job-2</strong> \
+  <strong>-n training-jobs --timeout=360s</strong>
+job.batch/research-round1-job-1 condition met
+job.batch/research-round1-job-2 condition met</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>As soon as round 1 finishes, Kueue admits workloads from the pending queue.
+Wait a few seconds for the controller to process, then check which team got admitted first:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>sleep 3</strong>
+$ <strong>oc get workloads -n training-jobs</strong> \
+  <strong>-o custom-columns='NAME:.metadata.name,QUEUE:.spec.queueName,ADMITTED:.status.conditions[?(@.type=="Admitted")].status'</strong> \
+  <strong>| grep round2</strong>
+job-production-round2-job-1-fbcf1   production-queue   True
+job-production-round2-job-2-67333   production-queue   True
+job-research-round2-job-1-7be29     research-queue     &lt;none&gt;
+job-research-round2-job-2-6e435     research-queue     &lt;none&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Production admitted, Research still pending</strong>&#8201;&#8212;&#8201;exactly what admission fair sharing predicts.</p>
+</div>
+</li>
+<li>
+<p>Verify the pods confirm this:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n training-jobs --no-headers | grep round2</strong>
+<strong>production-round2-job-1-q2l5q   1/1   Running     0     15s</strong>
+<strong>production-round2-job-2-tms2k   1/1   Running     0     15s</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Only production pods are running.
+The research round-2 jobs are not even listed because Kueue is holding them in a scheduling gate until GPU slots free up.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p><strong>This is Admission Fair Sharing in action.</strong>
+Even though the research jobs were created first in the YAML file, Kueue checked the historical <code>consumedResources</code> for each LocalQueue and admitted `production-queue&#8217;s workloads first because it had lower accumulated usage.</p>
+</div>
+<div class="paragraph">
+<p><strong>What happened:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Round 1 built usage history for <code>research-queue</code> (5 minutes x 2 GPUs worth of resource-time)</p>
+</li>
+<li>
+<p>Round 2 submitted all 4 jobs while the queue was full&#8201;&#8212;&#8201;all 4 were pending</p>
+</li>
+<li>
+<p>When round 1 completed and GPU slots freed up, Kueue checked <code>consumedResources</code> for each LocalQueue</p>
+</li>
+<li>
+<p><code>production-queue</code> had no historical usage&#8201;&#8212;&#8201;its 2 workloads were admitted first</p>
+</li>
+<li>
+<p><code>research-queue</code> had higher accumulated usage&#8201;&#8212;&#8201;its 2 workloads stay pending until production finishes</p>
+</li>
+</ol>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Wait for production to complete, then verify research gets admitted:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc wait --for=condition=complete job/production-round2-job-1 job/production-round2-job-2</strong> \
+  <strong>-n training-jobs --timeout=120s</strong>
+job.batch/production-round2-job-1 condition met
+job.batch/production-round2-job-2 condition met
+
+$ <strong>sleep 3</strong>
+$ <strong>oc get pods -n training-jobs --no-headers | grep round2</strong>
+production-round2-job-1-q2l5q   0/1   Completed   0     74s
+production-round2-job-2-tms2k   0/1   Completed   0     74s
+<strong>research-round2-job-1-t5r7v     1/1   Running     0     8s</strong>
+<strong>research-round2-job-2-hq8k4     1/1   Running     0     8s</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Production pods are <code>Completed</code>, and research pods are now <code>Running</code>&#8201;&#8212;&#8201;Kueue admitted them as soon as GPU slots freed up.</p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="cleanup-admission-fs"><a class="anchor" href="#cleanup-admission-fs"></a>4. Clean up admission fair sharing</h3>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Wait for all jobs to complete, then clean up:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc wait --for=condition=complete job/research-round2-job-1 job/research-round2-job-2</strong> \
+  <strong>-n training-jobs --timeout=120s</strong>
+job.batch/research-round2-job-1 condition met
+job.batch/research-round2-job-2 condition met
+
+$ <strong>oc delete jobs --all -n training-jobs</strong>
+job.batch "production-round2-job-1" deleted
+job.batch "production-round2-job-2" deleted
+job.batch "research-round1-job-1" deleted
+job.batch "research-round1-job-2" deleted
+job.batch "research-round2-job-1" deleted
+job.batch "research-round2-job-2" deleted
+
+$ <strong>oc delete localqueue research-queue production-queue -n training-jobs</strong>
+localqueue.kueue.x-k8s.io "research-queue" deleted
+localqueue.kueue.x-k8s.io "production-queue" deleted
+
+$ <strong>oc delete clusterqueue shared-gpu-queue</strong>
+clusterqueue.kueue.x-k8s.io "shared-gpu-queue" deleted</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Scale the operator back up&#8201;&#8212;&#8201;it will revert the ConfigMap (removing <code>admissionFairSharing</code>) and restart the controller automatically:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc scale deployment openshift-kueue-operator -n openshift-kueue-operator --replicas=2</strong>
+deployment.apps/openshift-kueue-operator scaled</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Wait about 30 seconds for the operator to reconcile, then verify all pods are healthy:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n openshift-kueue-operator --no-headers</strong>
+kueue-controller-manager-6d948c474c-mnflm   1/1   Running   0     22s
+kueue-controller-manager-6d948c474c-xgww5   1/1   Running   0     22s
+openshift-kueue-operator-5b4c49c95c-9mql2   1/1   Running   0     36s
+openshift-kueue-operator-5b4c49c95c-m469q   1/1   Running   0     36s</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify the controller is healthy and existing ClusterQueues are unaffected:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get clusterqueues</strong>
+NAME                 COHORT   PENDING WORKLOADS
+a100-cluster-queue            0
+default                       0
+t4-cluster-queue              0</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="drs-preemption.html">DRS Preemption</a></span>
+  <span class="next"><a href="troubleshooting.html">Troubleshooting</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script defer src="../../../_/js/vendor/tabs.js"></script>
+<script defer src="../../../_/js/vendor/reading-time.js"></script>
+  </body>
+</html>

@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Submit MIG Workloads :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="prev" href="kueue-mig-resources.html">
+    <link rel="next" href="mig-preemption.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../LABENV/index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../gpu-workloads/index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../fair-sharing/index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../rbac/index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">MIG</a></li>
+    <li><a href="mig-workloads.html">MIG Workloads</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Submit MIG Workloads</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>With the MIG Kueue resources in place, you submit three Jobs&#8201;&#8212;&#8201;one targeting each MIG profile&#8201;&#8212;&#8201;and verify that Kueue admits them to the correct MIG slots.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_references"><a class="anchor" href="#_references"></a>References</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/workload/" target="_blank" rel="noopener">Kueue: Workload</a></p>
+</li>
+<li>
+<p><a href="https://docs.nvidia.com/datacenter/tesla/mig-user-guide/" target="_blank" rel="noopener">NVIDIA: Multi-Instance GPU User Guide</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#managing-workloads" target="_blank" rel="noopener">Red Hat build of Kueue: Managing Jobs and Workloads</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_lab_submit_jobs_to_mig_profiles"><a class="anchor" href="#_lab_submit_jobs_to_mig_profiles"></a>Lab: Submit Jobs to MIG Profiles</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_1_submit_mig_workloads"><a class="anchor" href="#_1_submit_mig_workloads"></a>1. Submit MIG workloads</h3>
+<div class="paragraph">
+<p>Submit three Jobs, one targeting each MIG profile.
+Each Job requests a specific MIG resource type instead of <code>nvidia.com/gpu</code>.</p>
+</div>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Review <code>workloads/job-mig.yaml</code> before applying.
+The file contains three Jobs; here is one representative Job (the other two follow the same pattern with different MIG profiles):</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mig-job-3g-20gb                                <i class="conum" data-value="1"></i><b>(1)</b>
+  namespace: training-jobs
+  labels:
+    kueue.x-k8s.io/queue-name: mig-training-queue      <i class="conum" data-value="2"></i><b>(2)</b>
+spec:
+  suspend: true                                        <i class="conum" data-value="3"></i><b>(3)</b>
+  template:
+    metadata:
+      annotations:
+        run.ai/simulated-gpu-utilization: "70-90"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: mig-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        command: ["/bin/bash", "-c"]
+        args: [...]
+        resources:
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+            nvidia.com/mig-3g.20gb: "1"                <i class="conum" data-value="4"></i><b>(4)</b>
+          limits:
+            nvidia.com/mig-3g.20gb: "1"                <i class="conum" data-value="5"></i><b>(5)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Each Job name includes the MIG profile it targets for easy identification.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Submits to <code>mig-training-queue</code>, which is backed by <code>mig-cluster-queue</code> with the <code>a100-mig</code> flavor.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><code>suspend: true</code> is required for Kueue-managed Jobs. Kueue unsuspends the Job when it is admitted.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Instead of <code>nvidia.com/gpu</code>, the Job requests a specific MIG resource type. Kueue matches this against the MIG quotas in <code>mig-cluster-queue</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>Limits must match requests for GPU/MIG resources&#8201;&#8212;&#8201;Kubernetes requires this for extended resources.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Apply the Jobs:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f workloads/job-mig.yaml</strong>
+job.batch/mig-job-3g-20gb created
+job.batch/mig-job-2g-10gb created
+job.batch/mig-job-1g-5gb created</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This creates:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 28.5714%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2858%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Job</th>
+<th class="tableblock halign-left valign-top">MIG Resource</th>
+<th class="tableblock halign-left valign-top">Compute</th>
+<th class="tableblock halign-left valign-top">Memory</th>
+<th class="tableblock halign-left valign-top">CPU/Mem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-job-3g-20gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/mig-3g.20gb: 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3 slices</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">20 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2 CPU, 8Gi</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-job-2g-10gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/mig-2g.10gb: 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2 slices</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2 CPU, 4Gi</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-job-1g-5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/mig-1g.5gb: 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 slice</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 CPU, 2Gi</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>All three submit to <code>mig-training-queue</code> and should be admitted immediately since each MIG profile has exactly 1 instance available.</p>
+</div>
+</li>
+<li>
+<p>Verify the Jobs are admitted and running.</p>
+<div class="paragraph">
+<p>Check that all three Kueue workloads are admitted:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get workloads -n training-jobs</strong>
+NAME                        QUEUE                RESERVED IN         ADMITTED   FINISHED   AGE
+job-mig-job-1g-5gb-827dc    mig-training-queue   mig-cluster-queue   True                  25s
+job-mig-job-2g-10gb-295c0   mig-training-queue   mig-cluster-queue   True                  26s
+job-mig-job-3g-20gb-87347   mig-training-queue   mig-cluster-queue   True                  27s</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Check that pods are running on the A100 node:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n training-jobs -o wide</strong>
+NAME                    READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+mig-job-1g-5gb-lhtqt    1/1     Running   0          45s   10.235.0.76   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+mig-job-2g-10gb-56p2w   1/1     Running   0          46s   10.235.0.75   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+mig-job-3g-20gb-fg482   1/1     Running   0          47s   10.235.0.74   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Check that MIG resource consumption in the ClusterQueue shows all three profiles at Total 1:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc describe clusterqueue mig-cluster-queue | sed -n '/Flavors Usage:/,/Pending Workloads:/p' | grep -A 1 "nvidia.com/mig"</strong>
+      Name:             nvidia.com/mig-1g.5gb
+      Total:            1
+--
+      Name:             nvidia.com/mig-2g.10gb
+      Total:            1
+--
+      Name:             nvidia.com/mig-3g.20gb
+      Total:            1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Verify each pod requested the correct MIG resource type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n training-jobs -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].resources.requests}{"\n"}{end}'</strong>
+mig-job-1g-5gb-lhtqt	{"cpu":"1","memory":"2Gi","nvidia.com/mig-1g.5gb":"1"}
+mig-job-2g-10gb-56p2w	{"cpu":"2","memory":"4Gi","nvidia.com/mig-2g.10gb":"1"}
+mig-job-3g-20gb-fg482	{"cpu":"2","memory":"8Gi","nvidia.com/mig-3g.20gb":"1"}</code></pre>
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="title">How to verify each Job runs on its MIG instance</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Kueue admission</strong>&#8201;&#8212;&#8201;<code>oc get workloads</code> shows all three admitted via <code>mig-cluster-queue</code></p>
+</li>
+<li>
+<p><strong>Node placement</strong>&#8201;&#8212;&#8201;<code>oc get pods -o wide</code> shows all pods on the A100 node (worker-1)</p>
+</li>
+<li>
+<p><strong>Resource consumption</strong>&#8201;&#8212;&#8201;<code>oc describe clusterqueue mig-cluster-queue</code> shows each MIG profile&#8217;s usage at 1/1</p>
+</li>
+<li>
+<p><strong>Pod resource requests</strong>&#8201;&#8212;&#8201;each pod&#8217;s resource request shows its specific MIG type (not <code>nvidia.com/gpu</code>)</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>The fake <code>nvidia-smi</code> in MIG jobs will show <code>0MiB</code> memory usage even though the pods have <code>run.ai/simulated-gpu-utilization</code> annotations.
+This is a known limitation of the fake GPU operator&#8201;&#8212;&#8201;its status-updater only tracks allocation for pods requesting <code>nvidia.com/gpu</code> (whole GPUs), not <code>nvidia.com/mig-*</code> resources.</p>
+</div>
+<div class="paragraph">
+<p>The <code>nvidia-smi</code> output still correctly shows the A100 GPU product name, confirming the pod is on the right node, but simulated GPU utilization is not supported for MIG workloads.</p>
+</div>
+<div class="paragraph">
+<p>On real hardware with the NVIDIA GPU Operator, <code>nvidia-smi</code> would show individual MIG instances with their memory usage.
+For this lab, use the four verification methods above (Kueue admission, node placement, ClusterQueue usage, and pod resource requests) instead of nvidia-smi to confirm MIG is working.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Clean up the MIG Jobs:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc delete jobs -n training-jobs mig-job-3g-20gb mig-job-2g-10gb mig-job-1g-5gb</strong>
+job.batch "mig-job-3g-20gb" deleted from training-jobs namespace
+job.batch "mig-job-2g-10gb" deleted from training-jobs namespace
+job.batch "mig-job-1g-5gb" deleted from training-jobs namespace</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+Do not undo MIG yet&#8201;&#8212;&#8201;the next section uses the MIG configuration for priority preemption exercises.
+The <a href="undo-mig.html" class="xref page">Undo MIG</a> steps are at the end of this chapter.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="kueue-mig-resources.html">Kueue MIG Resources</a></span>
+  <span class="next"><a href="mig-preemption.html">MIG Preemption</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script defer src="../../../_/js/vendor/tabs.js"></script>
+<script defer src="../../../_/js/vendor/reading-time.js"></script>
+  </body>
+</html>

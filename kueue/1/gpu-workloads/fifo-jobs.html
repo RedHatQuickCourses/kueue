@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Training Jobs&#8201;&#8212;&#8201;FIFO Admission :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="prev" href="index.html">
+    <link rel="next" href="priority-jobs.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../LABENV/index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../fair-sharing/index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../mig/index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../rbac/index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">GPU Workloads</a></li>
+    <li><a href="fifo-jobs.html">FIFO Jobs</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Training Jobs&#8201;&#8212;&#8201;FIFO Admission</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this exercise, you submit three training Jobs with no WorkloadPriorityClass.
+Without priority, Kueue admits workloads in submission order&#8201;&#8212;&#8201;first-in, first-out (FIFO).</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_concepts"><a class="anchor" href="#_concepts"></a>Concepts</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When no WorkloadPriorityClass is set on a workload, Kueue uses FIFO ordering within the ClusterQueue.
+The first workload to arrive is the first to be admitted, as long as there is sufficient quota.</p>
+</div>
+<div class="paragraph">
+<p>In this exercise, each Job requests 1 GPU.
+With 4 A100 GPUs available and only 3 GPUs requested in total, all three Jobs are admitted immediately&#8201;&#8212;&#8201;there is no contention.</p>
+</div>
+<div class="sect2">
+<h3 id="_references"><a class="anchor" href="#_references"></a>References</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#queueing-strategy" target="_blank" rel="noopener">Kueue: Queueing Strategy</a></p>
+</li>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/workload/" target="_blank" rel="noopener">Kueue: Workload Lifecycle</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#running-kueue-jobs" target="_blank" rel="noopener">Red Hat build of Kueue: Running Jobs with Quota Limits</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_lab_submit_fifo_training_jobs"><a class="anchor" href="#_lab_submit_fifo_training_jobs"></a>Lab: Submit FIFO Training Jobs</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_1_submit_training_jobs_fifono_priority"><a class="anchor" href="#_1_submit_training_jobs_fifono_priority"></a>1. Submit training jobs (FIFO&#8201;&#8212;&#8201;no priority)</h3>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Review <code>workloads/job-no-priority.yaml</code> before applying.
+Only the first Job is shown here&#8201;&#8212;&#8201;the other two (<code>training-job-medium</code>, <code>training-job-high</code>) follow the same structure:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: batch/v1
+kind: Job
+metadata:
+  name: training-job-low
+  namespace: training-jobs                        <i class="conum" data-value="1"></i><b>(1)</b>
+  labels:
+    kueue.x-k8s.io/queue-name: training-queue     <i class="conum" data-value="2"></i><b>(2)</b>
+spec:
+  suspend: true                                   <i class="conum" data-value="3"></i><b>(3)</b>
+  template:
+    metadata:
+      annotations:
+        run.ai/simulated-gpu-utilization: "40-60"  <i class="conum" data-value="4"></i><b>(4)</b>
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: training-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          echo "=== Job: training-job-low (no priority) ==="
+          ...
+          nvidia-smi                               <i class="conum" data-value="5"></i><b>(5)</b>
+          sleep 5
+          ...
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+            nvidia.com/gpu: "1"                    <i class="conum" data-value="6"></i><b>(6)</b>
+          limits:
+            nvidia.com/gpu: "1"</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>All three Jobs are created in the <code>training-jobs</code> namespace, which is labeled <code>kueue.openshift.io/managed: "true"</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <code>queue-name</code> label routes the Job to the <code>training-queue</code> LocalQueue, which forwards it to <code>a100-cluster-queue</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><code>suspend: true</code> is required for Kueue-managed Jobs. Kueue holds the Job in a suspended state until it is admitted, then sets <code>suspend: false</code> to start it.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The <code>run.ai/simulated-gpu-utilization</code> annotation tells the Fake GPU Operator what GPU utilization percentage to report in <code>nvidia-smi</code> output.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>Each Job runs <code>nvidia-smi</code> every 5 seconds for 5 minutes. The output shows the GPU model name, confirming the pod landed on the correct node.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>Each Job requests 1 GPU. With 3 Jobs requesting 1 GPU each and 4 A100 GPUs available, all three are admitted immediately&#8201;&#8212;&#8201;no contention.
+<div class="paragraph">
+<p>None of the Jobs carry a <code>kueue.x-k8s.io/priority-class</code> label, so Kueue admits them in FIFO order.</p>
+</div></td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Apply the workloads:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f workloads/job-no-priority.yaml</strong>
+job.batch/training-job-low created
+job.batch/training-job-medium created
+job.batch/training-job-high created</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This creates three Jobs in the <code>training-jobs</code> namespace:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 42.8572%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Job</th>
+<th class="tableblock halign-left valign-top">GPUs</th>
+<th class="tableblock halign-left valign-top">Priority</th>
+<th class="tableblock halign-left valign-top">Expected Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>training-job-low</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None (FIFO)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Admitted&#8201;&#8212;&#8201;order depends on submission</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>training-job-medium</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None (FIFO)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Admitted&#8201;&#8212;&#8201;order depends on submission</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>training-job-high</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None (FIFO)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Admitted&#8201;&#8212;&#8201;order depends on submission</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>With 3 GPUs requested and 4 available on the A100 node, all three Jobs are admitted immediately.</p>
+</div>
+</li>
+<li>
+<p>Verify all three workloads are admitted:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get workloads -n training-jobs</strong>
+NAME                            QUEUE            RESERVED IN          ADMITTED   FINISHED   AGE
+job-training-job-high-9d054     training-queue   a100-cluster-queue   True                  25s
+job-training-job-low-b02e5      training-queue   a100-cluster-queue   True                  27s
+job-training-job-medium-73a9c   training-queue   a100-cluster-queue   True                  26s</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Check that all three pods are running on the A100 node:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n training-jobs -o wide</strong>
+NAME                        READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+training-job-high-cr2rq     1/1     Running   0          43s   10.235.0.46   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+training-job-low-gz6j2      1/1     Running   0          45s   10.235.0.44   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+training-job-medium-wbhrj   1/1     Running   0          44s   10.235.0.45   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Check logs&#8201;&#8212;&#8201;each Job prints <code>nvidia-smi</code> every 5 seconds for 5 minutes:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc logs -n training-jobs job/training-job-low -f</strong>
+=== Job: training-job-low (no priority) ===
+Node: worker-cluster-vnnbf-1
+GPUs requested: 1
+
+--- Mon Jun  8 11:36:16 UTC 2026 ---
+Mon Jun  8 11:36:16 2026
++------------------------------------------------------------------------------+
+| NVIDIA-SMI 470.129.06   Driver Version: 470.129.06   CUDA Version: 11.4      |
++--------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                |                      |               MIG M. |
++--------------------------------+----------------------+----------------------+
+|   0  NVIDIA-A10..          Off | 00000001:00:00.0 Off |                  Off |
+| N/A   33C    P8    11W /  70W  |  40960MiB / 40960MiB |       0%     Default |
+|                                |                      |                  N/A |
++--------------------------------+----------------------+----------------------+</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Each Job runs for 5 minutes, printing <code>nvidia-smi</code> output every 5 seconds.
+The output shows the <code>NVIDIA A100</code> GPU product name, confirming the pods landed on <code>worker-1</code>.</p>
+</div>
+<div class="paragraph">
+<p>Press <code>Ctrl+C</code> to exit the log viewer.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Use <code>oc get pods -n training-jobs -o wide</code> to see the NODE column.
+All three pods should be on the A100 worker node, confirming that the ResourceFlavor&#8217;s <code>nodeLabels</code> and <code>tolerations</code> are being injected correctly.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Clean up before the next exercise:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc delete jobs -n training-jobs training-job-low training-job-medium training-job-high</strong>
+job.batch "training-job-low" deleted from training-jobs namespace
+job.batch "training-job-medium" deleted from training-jobs namespace
+job.batch "training-job-high" deleted from training-jobs namespace</code></pre>
+</div>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+Always clean up workloads before starting the next exercise.
+Left-over Jobs consume GPU quota and may cause the next exercise&#8217;s workloads to remain pending.
+</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="index.html">GPU Workloads</a></span>
+  <span class="next"><a href="priority-jobs.html">Priority Jobs</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script defer src="../../../_/js/vendor/tabs.js"></script>
+<script defer src="../../../_/js/vendor/reading-time.js"></script>
+  </body>
+</html>

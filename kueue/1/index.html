@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>GPU Quota Management with Kueue on Red Hat OpenShift AI :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="next" href="LABENV/index.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../_/css/site.css">
+    <link rel="stylesheet" href="../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="LABENV/index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="gpu-workloads/index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="gpu-workloads/fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="gpu-workloads/priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="gpu-workloads/inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="fair-sharing/index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="fair-sharing/enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="fair-sharing/drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="fair-sharing/drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="fair-sharing/drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="fair-sharing/admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="fair-sharing/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="fair-sharing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="mig/index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig/mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig/mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig/topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig/verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig/kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig/mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig/mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig/undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="rbac/index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="rbac/verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="rbac/apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="rbac/test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="rbac/test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="rbac/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="index.html" class="home-link is-current"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">Home</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">GPU Quota Management with Kueue on Red Hat OpenShift AI</h1>
+<div class="sect1">
+<h2 id="_introduction"><a class="anchor" href="#_introduction"></a>Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This hands-on course teaches AI platform engineers how to manage GPU quotas across multiple teams using the <strong>Red Hat build of Kueue</strong> on Red Hat OpenShift AI clusters with the <strong>Fake GPU Operator</strong> to simulate NVIDIA GPUs. <strong>No physical GPU hardware is required</strong>.</p>
+</div>
+<div class="paragraph">
+<p>Students progress from installing Red Hat build of Kueue on a bare CPU-only OpenShift cluster to configuring multi-team fair sharing, MIG GPU partitioning, priority preemption, and role-based access control.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+The course uses the <strong>Red Hat build of Kueue</strong> and <strong>NOT</strong> the upstream community version of Kueue.
+All references to Kueue throughout the course refer to the Red Hat build of Kueue (v1.3).
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_course_overview_and_objectives"><a class="anchor" href="#_course_overview_and_objectives"></a>Course Overview and Objectives</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Organizations running GPU workloads on shared OpenShift clusters face a common challenge: how to fairly distribute expensive GPU resources across competing teams while maximizing utilization.
+This course addresses that challenge using the Red Hat build of Kueue, an open-source Kubernetes-native batch admission system.</p>
+</div>
+<div class="paragraph">
+<p>Students work through a structured, hands-on lab sequence on a live OpenShift cluster with simulated NVIDIA GPUs:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Install and configure the platform</strong>: Deploy Red Hat OpenShift AI (RHOAI) 3.4, the Fake GPU Operator that simulates A100 and T4 GPUs on CPU-only nodes, and the Red Hat build of Kueue as a standalone operator</p>
+</li>
+<li>
+<p><strong>Build a GPU quota system from scratch</strong>: Create <code>ResourceFlavors</code>, <code>ClusterQueues</code>, <code>LocalQueues</code>, and <code>WorkloadPriorityClasses</code> to enforce organizational GPU quotas</p>
+</li>
+<li>
+<p><strong>Submit and manage GPU workloads</strong>: Exercise first-in-first-out (FIFO) admission, priority-based scheduling, and queue isolation with real Kubernetes <code>Jobs</code> and <code>Deployments</code></p>
+</li>
+<li>
+<p><strong>Enable cross-team GPU sharing</strong>: Configure cohort borrowing so that idle GPUs in one team&#8217;s queue can be temporarily used by another team, with automatic reclaim when needed</p>
+</li>
+<li>
+<p><strong>Implement fair sharing with preemption</strong>: Set up <code>Dominant Resource Share</code> (DRS) fair sharing with configurable weights so teams get proportional access to a shared GPU pool</p>
+</li>
+<li>
+<p><strong>Partition GPUs with MIG</strong>: Split an A100 GPU into multiple MIG instances (mixed mode) and configure Kueue to manage both whole and partitioned GPU resources with priority preemption</p>
+</li>
+<li>
+<p><strong>Secure access with RBAC</strong>: Apply least-privilege role-based access control using Kueue&#8217;s aggregated <code>ClusterRoles</code> to separate platform admin and data scientist permissions</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>By the end of the course, students will be able to use the Red Hat build of Kueue to maximize GPU utilization, eliminate idle waste, and enforce fair access policies — reducing infrastructure costs while enabling multiple teams to share expensive GPU resources without contention.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_course_duration"><a class="anchor" href="#_course_duration"></a>Course Duration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Approximately 16 hours total (2 Days)</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_target_audience"><a class="anchor" href="#_target_audience"></a>Target Audience</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><strong>OpenShift administrators</strong> responsible for managing shared OpenShift clusters with GPU resources</p>
+</li>
+<li>
+<p><strong>ML engineers and data scientists</strong> who submit GPU workloads and need to understand how quota and admission policies affect their jobs</p>
+</li>
+<li>
+<p><strong>AI Platform Engineers</strong> designing multi-tenant GPU strategies for AI/ML platforms</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_prerequisites"><a class="anchor" href="#_prerequisites"></a>Prerequisites</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Working knowledge of Kubernetes/OpenShift concepts (<code>Pods</code>, <code>Jobs</code>, <code>Deployments</code>, <code>Namespaces</code>, <code>RBAC</code>)</p>
+</li>
+<li>
+<p>Familiarity with the <code>oc</code> or <code>kubectl</code> CLI for cluster administration</p>
+</li>
+<li>
+<p>Basic understanding of Helm for deploying operators</p>
+</li>
+<li>
+<p>No prior experience with Kueue or GPU partitioning (MIG) is required — the course covers these from the ground up</p>
+</li>
+<li>
+<p>Access to a provisioned lab cluster (RHDP or self-managed OpenShift 4.20+ with at least 2 dedicated worker nodes). No real NVIDIA GPUs are needed</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_getting_started"><a class="anchor" href="#_getting_started"></a>Getting Started</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before starting the course, set up your lab environment by following the instructions in <a href="LABENV/index.html" class="xref page">Lab Environment</a>.
+This covers cluster provisioning, hardware requirements, and environment verification.</p>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="next"><a href="LABENV/index.html">Lab Environment</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+<script defer src="../../_/js/vendor/tabs.js"></script>
+<script defer src="../../_/js/vendor/reading-time.js"></script>
+<script defer src="../../_/js/vendor/course-total-duration.js"></script>
+  </body>
+</html>

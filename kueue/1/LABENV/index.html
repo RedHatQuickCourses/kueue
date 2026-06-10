@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Lab Environment :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="prev" href="../index.html">
+    <link rel="next" href="../platform-setup/index.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../gpu-workloads/index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../fair-sharing/index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../mig/index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../rbac/index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">Lab Environment</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Lab Environment</h1>
+<div class="sect1">
+<h2 id="_ordering_your_lab_on_the_red_hat_demo_platform_rhdp"><a class="anchor" href="#_ordering_your_lab_on_the_red_hat_demo_platform_rhdp"></a>Ordering Your Lab on the Red Hat Demo Platform (RHDP)</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Log in</strong> to the RHDP portal.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Red Hat associates: <a href="https://demo.redhat.com/" target="_blank" rel="noopener">https://demo.redhat.com/</a></p>
+</li>
+<li>
+<p>Red Hat partners: <a href="https://partner.demo.redhat.com/" target="_blank" rel="noopener">https://partner.demo.redhat.com/</a></p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p><strong>Search</strong> for the catalog entry: <strong>Red Hat OpenShift Container Platform Cluster (CNV)</strong>.</p>
+<div class="paragraph">
+<p>Direct link: <a href="https://catalog.demo.redhat.com/catalog/babylon-catalog-prod?item=babylon-catalog-prod/agd-v2.ocp-cluster-cnv.prod" target="_blank" rel="noopener">Red Hat OpenShift Container Platform Cluster (CNV)</a></p>
+</div>
+</li>
+<li>
+<p>On the catalog page, <strong>click</strong> the <strong>Order</strong> button.</p>
+</li>
+<li>
+<p><strong>Fill out</strong> the required details in the order form.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p><strong>Activity</strong>: <code>Practice/Enablement</code></p>
+</li>
+<li>
+<p><strong>Purpose</strong>: <code>Learning about the product</code></p>
+</li>
+<li>
+<p><strong>cluster_size</strong>: <code>multinode</code></p>
+</li>
+<li>
+<p><strong>OpenShift version</strong>: <code>4.20</code></p>
+</li>
+<li>
+<p><strong>OpenShift Worker count</strong>: 2</p>
+</li>
+<li>
+<p><strong>OpenShift Worker memory</strong>: <code>64Gi</code></p>
+</li>
+<li>
+<p><strong>OpenShift Worker CPU</strong>: <code>16</code></p>
+</li>
+<li>
+<p>Select the <code>Create users on cluster?</code> option to create users in OpenShift</p>
+</li>
+<li>
+<p><strong>User count</strong>: <code>5</code></p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Review the <strong>IMPORTANT information</strong> text at the bottom of the form and select the box labeled:<br>
+<strong>"I confirm that I understand the above warnings."</strong></p>
+</li>
+<li>
+<p>Click the <strong>Order</strong> button to start provisioning your lab environment.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+This lab can take approximately <strong>60-90 minutes</strong> to be provisioned.
+You will receive an email with access details after your lab environment is provisioned.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_how_to_access_your_lab_via_the_rhdp_portal"><a class="anchor" href="#_how_to_access_your_lab_via_the_rhdp_portal"></a>How to Access Your Lab via the RHDP Portal</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>On the RHDP portal, <strong>click</strong> on the <strong>Services</strong> option in the left-hand menu.</p>
+</li>
+<li>
+<p><strong>Select your lab</strong> from the listings on the right-hand side of the page to view access details.</p>
+</li>
+</ol>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="_images/lab-details.png" alt="Newly provisiobed lab environment details">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_cluster_specifications"><a class="anchor" href="#_cluster_specifications"></a>Cluster Specifications</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This course was tested on the following cluster configuration.
+If you are provisioning your own cluster outside of RHDP, match these specifications as closely as possible.</p>
+</div>
+<div class="sect2">
+<h3 id="_cluster_topology"><a class="anchor" href="#_cluster_topology"></a>Cluster Topology</h3>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Your cluster <strong>must not</strong> have any nodes with real NVIDIA GPUs attached, and the <strong>NVIDIA GPU Operator must not be installed</strong>.
+This course uses the <a href="https://github.com/run-ai/fake-gpu-operator" target="_blank" rel="noopener">Fake GPU Operator</a> instead, which registers its own device plugin for the <code>nvidia.com/gpu</code> resource type.
+The NVIDIA GPU Operator does the same thing&#8201;&#8212;&#8201;both operators attempt to register a device plugin for <code>nvidia.com/gpu</code> with kubelet, and only one device plugin can own a given resource type per node.
+If both are present, the device plugins conflict: kubelet receives competing registrations, GPU counts become unpredictable, and pod scheduling breaks silently.
+Use a <strong>CPU-only</strong> cluster with no physical GPUs for this course.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The diagram below shows the cluster architecture after the Fake GPU Operator is installed in <a href="../platform-setup/index.html" class="xref page">Platform Setup^</a>.
+The two dedicated worker nodes simulate NVIDIA GPUs that Kueue manages throughout the course.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="_images/cluster-topology.svg" alt="Cluster Topology" width="900">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tested_versions"><a class="anchor" href="#_tested_versions"></a>Tested Versions</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 40%;">
+<col style="width: 60%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Component</th>
+<th class="tableblock halign-left valign-top">Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OpenShift Container Platform</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4.20.22</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Kubernetes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">v1.33.10</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Red Hat Enterprise Linux CoreOS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">9.6 (Plow)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CRI-O</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.33.11</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>oc</code> CLI</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4.20.22</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_node_configuration"><a class="anchor" href="#_node_configuration"></a>Node Configuration</h3>
+<div class="paragraph">
+<p>The cluster has 5 nodes: 3 control-plane nodes (which also carry the <code>worker</code> role) and 2 dedicated worker nodes.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2858%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Node Role</th>
+<th class="tableblock halign-left valign-top">Count</th>
+<th class="tableblock halign-left valign-top">vCPUs</th>
+<th class="tableblock halign-left valign-top">Memory</th>
+<th class="tableblock halign-left valign-top">Disk</th>
+<th class="tableblock halign-left valign-top">Architecture</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Control-plane + worker</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">16</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">64 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">100 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">x86_64 (amd64)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Worker (dedicated)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">16</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">64 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">100 GiB</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">x86_64 (amd64)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_storage"><a class="anchor" href="#_storage"></a>Storage</h3>
+<div class="paragraph">
+<p>The cluster uses OpenShift Data Foundation (ODF) with an external Ceph cluster.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">StorageClass</th>
+<th class="tableblock halign-left valign-top">Provisioner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ocs-external-storagecluster-ceph-rbd</code> (default)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>openshift-storage.rbd.csi.ceph.com</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ocs-external-storagecluster-cephfs</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>openshift-storage.cephfs.csi.ceph.com</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>openshift-storage.noobaa.io</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>openshift-storage.noobaa.io/obc</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_platform"><a class="anchor" href="#_platform"></a>Platform</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 40%;">
+<col style="width: 60%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Infrastructure platform</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">BareMetal (virtualized via RHDP)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Identity provider</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Red Hat Build of Keycloak (RHBK)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pre-installed operators</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ODF, CNV, Keycloak, cert-manager</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_minimum_requirements_for_your_own_cluster"><a class="anchor" href="#_minimum_requirements_for_your_own_cluster"></a>Minimum Requirements for Your Own Cluster</h3>
+<div class="paragraph">
+<p>If provisioning outside of RHDP, your cluster needs at minimum:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>OpenShift 4.17+ (tested on 4.20)</p>
+</li>
+<li>
+<p><strong>2 dedicated worker nodes</strong> with at least 16 vCPUs and 64 GiB RAM each</p>
+</li>
+<li>
+<p>Cluster admin access via <code>oc</code></p>
+</li>
+<li>
+<p>cert-manager Operator installed</p>
+</li>
+<li>
+<p>Persistent storage (any CSI-based StorageClass)</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The control-plane nodes also having the <code>worker</code> role is not required.
+The lab exercises only use the 2 dedicated worker nodes for GPU simulation.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_verifying_cluster_access"><a class="anchor" href="#_verifying_cluster_access"></a>Verifying Cluster Access</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Once your lab is provisioned, log in with the credentials from the RHDP email:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc login -u admin -p &lt;password&gt; OPENSHIFT_CLUSTER_API_URL</strong>
+Login successful.
+...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Verify the cluster nodes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get nodes</strong>
+NAME                            STATUS   ROLES                         AGE   VERSION
+control-plane-cluster-vnnbf-1   Ready    control-plane,master,worker   19h   v1.33.11
+control-plane-cluster-vnnbf-2   Ready    control-plane,master,worker   19h   v1.33.11
+control-plane-cluster-vnnbf-3   Ready    control-plane,master,worker   19h   v1.33.11
+worker-cluster-vnnbf-1          Ready    worker                        78m   v1.33.11
+worker-cluster-vnnbf-2          Ready    worker                        77m   v1.33.1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You should see 3 control plane nodes and 2 worker nodes.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_required_cli_tools"><a class="anchor" href="#_required_cli_tools"></a>Required CLI Tools</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Ensure the following tools are installed on your workstation:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>oc</code> - OpenShift CLI</p>
+</li>
+<li>
+<p><code>helm</code> - Helm 3.x</p>
+</li>
+<li>
+<p><code>git</code> - for cloning the lab files repository</p>
+</li>
+<li>
+<p><code>python3</code> - used for JSON formatting in verification commands</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_cloning_the_lab_files_repository"><a class="anchor" href="#_cloning_the_lab_files_repository"></a>Cloning the Lab Files Repository</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The lab files (Helm charts, Kueue configuration, workload manifests, and scripts) are in a separate repository from the course content.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>git clone https://github.com/RedHatQuickCourses/genai-apps.git</strong>
+$ <strong>cd genai-apps/kueue</strong></code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_setting_worker_node_variables"><a class="anchor" href="#_setting_worker_node_variables"></a>Setting Worker Node Variables</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Identify your two worker nodes and export them as environment variables.
+These variables are used in <strong>all subsequent commands</strong> throughout the course.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get nodes -l</strong> \
+  <strong>node-role.kubernetes.io/worker,\!node-role.kubernetes.io/control-plane</strong>
+
+NAME                     STATUS   ROLES    AGE   VERSION
+<strong>worker-cluster-vnnbf-1</strong>   Ready    worker   84m   v1.33.11
+<strong>worker-cluster-vnnbf-2</strong>   Ready    worker   83m   v1.33.11
+
+$ <strong>export WORKER_NODE1=&lt;your-worker-1-name&gt;</strong>
+$ <strong>export WORKER_NODE2=&lt;your-worker-2-name&gt;</strong></code></pre>
+</div>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+If you open a new terminal session, do not forget to re-export <code>$WORKER_NODE1</code> and <code>$WORKER_NODE2</code> before executing commands.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_verifying_your_lab_environment"><a class="anchor" href="#_verifying_your_lab_environment"></a>Verifying Your Lab Environment</h2>
+<div class="sectionbody">
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+If you have previously run any part of this course on this cluster (or a previous student used the same RHDP environment), leftover resources can cause unexpected failures.
+Run the cleanup script first to ensure a clean starting state, then verify with the verification script.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_step_1_clean_up_previous_runs_optional"><a class="anchor" href="#_step_1_clean_up_previous_runs_optional"></a>Step 1: Clean Up Previous Runs (Optional)</h3>
+<div class="paragraph">
+<p>If you have not provisioned a new cluster, and have executed all or part of the hands-on labs, run the cleanup script to remove all lab resources and start from a clean state:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>bash scripts/cluster-reset.sh</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This command is safe to run on a fresh cluster. It does nothing if there are no lab resources to remove.
+See <a href="../cluster-reset/index.html" class="xref page">Cluster Reset</a> for details on what the script removes.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_step_2_verify_the_environment"><a class="anchor" href="#_step_2_verify_the_environment"></a>Step 2: Verify the Environment</h3>
+<div class="paragraph">
+<p>Run the verification script to confirm your cluster is ready for the course:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>bash scripts/verify-lab-env.sh</strong>
+
+1. Cluster Access
+  ✓ Logged in as admin
+  ✓ User has cluster-admin privileges
+
+2. OpenShift Version
+  ✓ OpenShift 4.20.23 (Kubernetes v1.33.11)
+  ✓ Version 4.20 meets minimum requirement (4.17+)
+
+3. Node Configuration
+  ✓ 5 total nodes in cluster
+  ✓ 2 dedicated worker nodes found
+  → Worker 1: worker-cluster-vnnbf-1
+  → Worker 2: worker-cluster-vnnbf-2
+  ✓ worker-cluster-vnnbf-1: 16 vCPUs, 63 GiB RAM
+  ✓ worker-cluster-vnnbf-2: 16 vCPUs, 63 GiB RAM
+
+4. No Leftover Lab Resources
+  ✓ No leftover lab resources found
+
+5. Required CLI Tools
+  ✓ oc:
+  ✓ helm: v4.2.0+g0646808
+  ✓ git: git version 2.50.1 (Apple Git-155)
+  ✓ python3: Python 3.13.7
+
+6. cert-manager Operator
+  ✓ cert-manager installed: cert-manager-operator.v1.19.0
+
+7. Cluster Health
+  ✓ Authentication operator: Available
+  ✓ No degraded cluster operators
+
+
+Summary
+<strong>All 16 checks passed. Your cluster is ready for the course.</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The script checks the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Cluster admin access and OCP version</p>
+</li>
+<li>
+<p>At least 2 dedicated worker nodes with sufficient CPU and memory</p>
+</li>
+<li>
+<p>No leftover lab resources (taints, labels, namespaces, operators)</p>
+</li>
+<li>
+<p>Required CLI tools (<code>oc</code>, <code>helm</code>, <code>git</code>, <code>python3</code>)</p>
+</li>
+<li>
+<p>cert-manager Operator installed</p>
+</li>
+<li>
+<p>Cluster health (authentication operator, no degraded operators)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If all checks pass, you will see:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-text hljs" data-lang="text">Summary
+<strong>All 15 checks passed. Your cluster is ready for the course.</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If any checks fail, the script tells you exactly what to fix.</p>
+</div>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="../index.html">Home</a></span>
+  <span class="next"><a href="../platform-setup/index.html">Platform Setup</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script defer src="../../../_/js/vendor/tabs.js"></script>
+<script defer src="../../../_/js/vendor/reading-time.js"></script>
+  </body>
+</html>

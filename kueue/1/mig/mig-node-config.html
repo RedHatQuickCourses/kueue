@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Configure MIG on the Node :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="prev" href="mig-faker-fix.html">
+    <link rel="next" href="topology-update.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../LABENV/index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../gpu-workloads/index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../fair-sharing/index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../rbac/index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">MIG</a></li>
+    <li><a href="mig-node-config.html">MIG Node Config</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Configure MIG on the Node</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this section, you apply MIG labels and the partition annotation to the A100 worker node, then verify that the mig-faker DaemonSet processes the configuration.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_concepts_mig_node_annotation"><a class="anchor" href="#_concepts_mig_node_annotation"></a>Concepts: MIG Node Annotation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The MIG configuration is driven by two pieces of node metadata:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Labels</strong>&#8201;&#8212;&#8201;<code>runai-dynamic-mig</code> and <code>runai-mig-enabled</code> tell the fake GPU operator&#8217;s mig-faker DaemonSet that this node supports MIG</p>
+</li>
+<li>
+<p><strong>Annotation</strong>&#8201;&#8212;&#8201;<code>run.ai/mig.config</code> defines the MIG partition layout for GPU 0; GPUs 1-3 are not listed and remain as whole devices</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_annotation_format"><a class="anchor" href="#_annotation_format"></a>Annotation format</h3>
+<div class="paragraph">
+<p>The <code>run.ai/mig.config</code> annotation contains a YAML document that tells the mig-faker exactly how to partition each GPU.
+Here is the annotation used in this lab:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">run.ai/mig.config: |
+  version: v1
+  mig-configs:
+    selected:
+    - devices: ["0"]          <i class="conum" data-value="1"></i><b>(1)</b>
+      mig-enabled: true
+      mig-devices:
+      - name: 3g.20gb         <i class="conum" data-value="2"></i><b>(2)</b>
+        position: 0            <i class="conum" data-value="3"></i><b>(3)</b>
+        size: 3                <i class="conum" data-value="4"></i><b>(4)</b>
+      - name: 2g.10gb
+        position: 4
+        size: 2
+      - name: 1g.5gb
+        position: 6
+        size: 1</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>devices</code>&#8201;&#8212;&#8201;which GPU indices to partition (only GPU 0 in this lab; GPUs 1-3 are not listed and remain as whole devices)</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><code>name</code>&#8201;&#8212;&#8201;the MIG profile to create (must match a valid profile for the GPU model, e.g. <code>3g.20gb</code> on A100 40GB)</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><code>position</code>&#8201;&#8212;&#8201;the GPU Instance (GI) slot start position on the compute fabric; this determines where the instance is physically placed on the die</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><code>size</code>&#8201;&#8212;&#8201;the number of compute slices consumed (the <code>X</code> in <code>Xg.Ygb</code>)</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The <code>mig-devices</code> field must be an <strong>array of objects</strong>, not a map.
+Positions must not overlap&#8201;&#8212;&#8201;each MIG instance occupies <code>size</code> consecutive compute slots starting at <code>position</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_references"><a class="anchor" href="#_references"></a>References</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.nvidia.com/datacenter/tesla/mig-user-guide/" target="_blank" rel="noopener">NVIDIA: Multi-Instance GPU User Guide</a></p>
+</li>
+<li>
+<p><a href="https://docs.nvidia.com/datacenter/tesla/mig-user-guide/#partitioning" target="_blank" rel="noopener">NVIDIA: MIG Partitioning</a></p>
+</li>
+<li>
+<p><a href="https://github.com/run-ai/fake-gpu-operator" target="_blank" rel="noopener">Fake GPU Operator</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_lab_apply_mig_node_configuration"><a class="anchor" href="#_lab_apply_mig_node_configuration"></a>Lab: Apply MIG Node Configuration</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="edit-mig-config"><a class="anchor" href="#edit-mig-config"></a>1. Edit the MIG node configuration</h3>
+<div class="paragraph">
+<p>The MIG labels and partition annotation are defined in a single YAML file.
+Before applying, you must replace the placeholder node name with <code>$WORKER_NODE1</code> (set in <a href="../LABENV/index.html#_setting_worker_node_variables" class="xref page">Setting Worker Node Variables</a>).</p>
+</div>
+<div class="paragraph">
+<p>Verify the variable is set:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>echo $WORKER_NODE1</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Edit the file and replace the placeholder node name with the value of <code>$WORKER_NODE1</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>vi kueue-config/6a-mig-node-config.yaml</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can also use <code>sed</code> to do the replacement automatically:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>sed -i "s/worker-cluster-fn765-1/$WORKER_NODE1/" kueue-config/6a-mig-node-config.yaml</strong></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_2_apply_the_mig_node_configuration"><a class="anchor" href="#_2_apply_the_mig_node_configuration"></a>2. Apply the MIG node configuration</h3>
+<div class="paragraph">
+<p>Review <code>kueue-config/6a-mig-node-config.yaml</code> before applying:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: v1
+kind: Node
+metadata:
+  name: worker-cluster-fn765-1              <i class="conum" data-value="1"></i><b>(1)</b>
+  labels:
+    node-role.kubernetes.io/runai-dynamic-mig: "true"  <i class="conum" data-value="2"></i><b>(2)</b>
+    node-role.kubernetes.io/runai-mig-enabled: "true"   <i class="conum" data-value="2"></i><b>(2)</b>
+  annotations:
+    run.ai/mig.config: |                    <i class="conum" data-value="3"></i><b>(3)</b>
+      version: v1
+      mig-configs:
+        selected:
+        - devices: ["0"]                    <i class="conum" data-value="4"></i><b>(4)</b>
+          mig-enabled: true
+          mig-devices:
+          - name: 3g.20gb                   <i class="conum" data-value="5"></i><b>(5)</b>
+            position: 0
+            size: 3
+          - name: 2g.10gb
+            position: 4
+            size: 2
+          - name: 1g.5gb
+            position: 6
+            size: 1</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Must match your actual A100 node name (replaced in step 1).</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>These labels tell the mig-faker DaemonSet that this node supports MIG partitioning.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The <code>run.ai/mig.config</code> annotation defines the entire MIG partition layout as an inline YAML document.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><code>devices: ["0"]</code> partitions only GPU 0. GPUs 1-3 are not listed and remain as whole devices.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>Each <code>mig-devices</code> entry specifies a MIG profile: <code>name</code> is the profile, <code>position</code> is the starting compute slice index, and <code>size</code> is the number of compute slices consumed.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f kueue-config/6a-mig-node-config.yaml</strong>
+node/worker-cluster-vnnbf-1 configured</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This applies both the MIG labels and the partition annotation to the node in a single step.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Never run <code>oc delete -f kueue-config/6a-mig-node-config.yaml</code>&#8201;&#8212;&#8201;this would delete the <strong>entire Node object</strong> from the cluster, not just the labels and annotations.
+To remove MIG configuration, use the individual <code>oc annotate</code> and <code>oc label</code> removal commands in <a href="undo-mig.html" class="xref page">Undo MIG</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Verify the labels and annotation:</p>
+</div>
+<div class="paragraph">
+<p>Check the MIG labels:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get node $WORKER_NODE1 --show-labels | tr ',' '\n' | grep -E 'mig|dynamic'</strong>
+worker-cluster-vnnbf-1   Ready    runai-dynamic-mig
+runai-mig-enabled
+node-role.kubernetes.io/runai-dynamic-mig=true
+node-role.kubernetes.io/runai-mig-enabled=true
+nvidia.com/mig.config.state=success
+nvidia.com/mig.strategy=mixed</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Check the annotation:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get node $WORKER_NODE1 -o jsonpath='{.metadata.annotations.run\.ai/mig\.config}'</strong>
+version: v1
+mig-configs:
+  selected:
+  - devices: ["0"]
+    mig-enabled: true
+    mig-devices:
+    - name: 3g.20gb
+      position: 0
+      size: 3
+    - name: 2g.10gb
+      position: 4
+      size: 2
+    - name: 1g.5gb
+      position: 6
+      size: 1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You should see both labels set to <code>true</code> and the MIG config annotation with three <code>mig-devices</code> entries.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_understanding_the_annotation"><a class="anchor" href="#_understanding_the_annotation"></a>Understanding the Annotation</h3>
+<div class="paragraph">
+<p>The <code>mig-devices</code> section uses <strong>GPU Instance (GI) slot positions</strong>&#8201;&#8212;&#8201;these are starting compute slice indices that define where each MIG instance is physically placed on the GPU die.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 20%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Position</th>
+<th class="tableblock halign-left valign-top">Profile</th>
+<th class="tableblock halign-left valign-top">Compute Slices</th>
+<th class="tableblock halign-left valign-top">Memory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>3g.20gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Slices 0-2 (3 of 7)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">20 GiB (4 of 8 partitions)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>2g.10gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Slices 4-5 (2 of 7)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10 GiB (2 of 8 partitions)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>1g.5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Slice 6 (1 of 7)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5 GiB (1 of 8 partitions)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>This uses 6 of 7 compute slices and 7 of 8 memory partitions (35 GiB of 40 GiB).
+Compute slice 3 is a gap&#8201;&#8212;&#8201;the A100 MIG architecture requires specific alignment for each profile size.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_3_verify_the_mig_faker_processed_the_annotation"><a class="anchor" href="#_3_verify_the_mig_faker_processed_the_annotation"></a>3. Verify the mig-faker processed the annotation</h3>
+<div class="paragraph">
+<p>The mig-faker DaemonSet watches for the <code>run.ai/mig.config</code> annotation.
+When it sees it, it validates the MIG layout, generates device UUIDs, and sets a success label on the node.</p>
+</div>
+<div class="paragraph">
+<p>Wait about 15 seconds, then check:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get node $WORKER_NODE1 -o jsonpath='{.metadata.labels.nvidia\.com/mig\.config\.state}'</strong>
+success</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Expected output: <code>success</code></p>
+</div>
+<div class="paragraph">
+<p>If the label is blank or missing, see <a href="troubleshooting.html" class="xref page">Troubleshooting MIG</a>.</p>
+</div>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="mig-faker-fix.html">mig-faker Fix</a></span>
+  <span class="next"><a href="topology-update.html">Topology Update</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script defer src="../../../_/js/vendor/tabs.js"></script>
+<script defer src="../../../_/js/vendor/reading-time.js"></script>
+  </body>
+</html>

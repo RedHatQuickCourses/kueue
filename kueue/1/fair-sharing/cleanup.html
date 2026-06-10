@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Clean Up Fair Sharing :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="prev" href="troubleshooting.html">
+    <link rel="next" href="../mig/index.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../LABENV/index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../gpu-workloads/index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../mig/index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../rbac/index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">Fair Sharing</a></li>
+    <li><a href="cleanup.html">Clean Up</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Clean Up Fair Sharing</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Clean up all fair sharing resources and revert to classical preemption.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_references"><a class="anchor" href="#_references"></a>References</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#fair-sharing" target="_blank" rel="noopener">Kueue: Fair Sharing</a></p>
+</li>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#preemption" target="_blank" rel="noopener">Kueue: Preemption</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-fairsharing" target="_blank" rel="noopener">Red Hat build of Kueue: Configuring Fair Sharing</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_lab_clean_up"><a class="anchor" href="#_lab_clean_up"></a>Lab: Clean Up</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_1_clean_up_fair_sharing"><a class="anchor" href="#_1_clean_up_fair_sharing"></a>1. Clean up fair sharing</h3>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The <a href="admission-fair-sharing.html#cleanup-admission-fs" class="xref page">Clean up admission fair sharing</a> step already cleaned up the admission fair sharing resources (<code>shared-gpu-queue</code>, <code>research-queue</code>, <code>production-queue</code>) and scaled the operator back up.
+This step cleans up the DRS fair sharing resources from the DRS fair sharing exercises and reverts the Kueue CR to classical preemption.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Delete all remaining workloads and DRS fair sharing resources:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc delete jobs --all -n training-jobs</strong>
+job.batch "team-a-job-1" deleted
+job.batch "team-a-job-2" deleted
+job.batch "team-a-job-3" deleted
+
+$ <strong>oc delete jobs --all -n team-b-jobs</strong>
+job.batch "team-b-job-1" deleted
+job.batch "team-b-job-2" deleted
+
+$ <strong>oc delete localqueue team-a-queue -n training-jobs</strong>
+localqueue.kueue.x-k8s.io "team-a-queue" deleted
+
+$ <strong>oc delete localqueue team-b-queue -n team-b-jobs</strong>
+localqueue.kueue.x-k8s.io "team-b-queue" deleted
+
+$ <strong>oc delete clusterqueue team-a-cluster-queue team-b-cluster-queue</strong>
+clusterqueue.kueue.x-k8s.io "team-a-cluster-queue" deleted
+clusterqueue.kueue.x-k8s.io "team-b-cluster-queue" deleted
+
+$ <strong>oc delete namespace team-b-jobs</strong>
+namespace "team-b-jobs" deleted</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Revert the Kueue CR to classical preemption:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc patch kueues.kueue.openshift.io cluster -n openshift-kueue-operator --type merge -p '{</strong>
+  <strong>"spec": {</strong>
+    <strong>"config": {</strong>
+      <strong>"preemption": {</strong>
+        <strong>"preemptionPolicy": "Classical"</strong>
+      <strong>}</strong>
+    <strong>}</strong>
+  <strong>}</strong>
+<strong>}'</strong>
+kueue.kueue.openshift.io/cluster patched</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Wait about 15 seconds for the operator to reconcile, then restore the original isolated ClusterQueues:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f kueue-config/3-cluster-queues.yaml</strong>
+clusterqueue.kueue.x-k8s.io/a100-cluster-queue unchanged
+clusterqueue.kueue.x-k8s.io/t4-cluster-queue unchanged</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Verify clean state:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get clusterqueues</strong>
+NAME                 COHORT   PENDING WORKLOADS
+a100-cluster-queue            0
+default                       0
+t4-cluster-queue              0
+
+$ <strong>oc get pods -n openshift-kueue-operator --no-headers</strong>
+kueue-controller-manager-6c6dd585cc-7mhtw   1/1   Running   0     28s
+kueue-controller-manager-6c6dd585cc-gt96l   1/1   Running   0     27s
+openshift-kueue-operator-5b4c49c95c-9mql2   1/1   Running   0     5m6s
+openshift-kueue-operator-5b4c49c95c-m469q   1/1   Running   0     5m6s
+
+$ <strong>oc get kueues.kueue.openshift.io cluster -n openshift-kueue-operator</strong> \
+  <strong>-o jsonpath='{.spec.config.preemption}' | python3 -m json.tool</strong>
+{
+    "preemptionPolicy": "Classical"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_summary"><a class="anchor" href="#_summary"></a>Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You have demonstrated two types of fair sharing:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>DRS Fair Sharing</strong> (DRS fair sharing exercises)&#8201;&#8212;&#8201;proportional preemption between ClusterQueues in a cohort, driven by <code>weightedShare</code> (DRS) scores and <code>fairSharing.weight</code> values</p>
+</li>
+<li>
+<p><strong>Admission Fair Sharing</strong> (admission fair sharing exercise)&#8201;&#8212;&#8201;usage-based admission ordering within a single ClusterQueue, driven by historical <code>consumedResources</code> per LocalQueue</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fair_sharing_configuration_summary"><a class="anchor" href="#_fair_sharing_configuration_summary"></a>Fair Sharing Configuration Summary</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 50%;">
+<col style="width: 16.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">File</th>
+<th class="tableblock halign-left valign-top">Resources</th>
+<th class="tableblock halign-left valign-top">Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>10-fair-sharing.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace <code>team-b-jobs</code>, 2 ClusterQueues with <code>fairSharing.weight</code>, 2 LocalQueues in <code>fair-sharing-cohort</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cluster</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>job-fair-sharing-team-a.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3 Team A jobs (1 GPU each) in <code>training-jobs</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>job-fair-sharing-team-b.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2 Team B jobs (1 GPU each) in <code>team-b-jobs</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>10a-admission-fair-sharing.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 ClusterQueue with <code>admissionScope</code>, 2 LocalQueues (<code>research-queue</code>, <code>production-queue</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cluster</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>job-admission-fs-round1.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2 Research jobs (1 GPU each) in <code>training-jobs</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>job-admission-fs-round2.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2 Research + 2 Production jobs (1 GPU each) in <code>training-jobs</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>In the <a href="../mig/index.html" class="xref page">next chapter</a>, you learn how to partition A100 GPUs into MIG instances and manage them with Kueue.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+For a complete cluster reset (removing ALL lab resources), see <a href="../cluster-reset/index.html" class="xref page">Cluster Reset</a>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="troubleshooting.html">Troubleshooting</a></span>
+  <span class="next"><a href="../mig/index.html">MIG</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script defer src="../../../_/js/vendor/tabs.js"></script>
+<script defer src="../../../_/js/vendor/reading-time.js"></script>
+  </body>
+</html>

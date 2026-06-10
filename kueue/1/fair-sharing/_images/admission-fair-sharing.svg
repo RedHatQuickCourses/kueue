@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <linearGradient id="cqGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8f5e9"/>
+      <stop offset="100%" stop-color="#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="lqGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f3e8fd"/>
+      <stop offset="100%" stop-color="#e1bee7"/>
+    </linearGradient>
+    <linearGradient id="flavorGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff3e0"/>
+      <stop offset="100%" stop-color="#ffe0b2"/>
+    </linearGradient>
+    <linearGradient id="nodeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8f0fe"/>
+      <stop offset="100%" stop-color="#c6dafc"/>
+    </linearGradient>
+    <linearGradient id="usageHighGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffebee"/>
+      <stop offset="100%" stop-color="#ffcdd2"/>
+    </linearGradient>
+    <linearGradient id="usageLowGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8f5e9"/>
+      <stop offset="100%" stop-color="#c8e6c9"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5f6368"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2e7d32"/>
+    </marker>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="38" text-anchor="middle" font-size="28" font-weight="bold" fill="#202124">Admission Fair Sharing</text>
+  <text x="450" y="64" text-anchor="middle" font-size="17" fill="#5f6368">Kueue admits the LocalQueue with the lowest historical usage first</text>
+
+  <!-- ==================== ClusterQueue ==================== -->
+  <rect x="100" y="90" width="700" height="110" rx="10" fill="url(#cqGrad)" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="450" y="118" text-anchor="middle" font-size="20" font-weight="bold" fill="#1b5e20">shared-gpu-queue</text>
+  <text x="450" y="142" text-anchor="middle" font-size="15" fill="#558b2f">admissionScope: UsageBasedAdmissionFairSharing</text>
+  <text x="450" y="164" text-anchor="middle" font-size="15" fill="#689f38">Quota: 2 A100 GPUs (shared by both teams)</text>
+
+  <!-- Flavor box -->
+  <rect x="320" y="210" width="260" height="46" rx="8" fill="url(#flavorGrad)" stroke="#ef6c00" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="450" y="233" text-anchor="middle" font-size="17" font-weight="bold" fill="#bf360c">Flavor: a100-gpu</text>
+  <text x="450" y="249" text-anchor="middle" font-size="13" fill="#4e342e">nodeLabel: NVIDIA-A100-SXM4-40GB</text>
+
+  <!-- Arrow: CQ -> Flavor -->
+  <line x1="450" y1="200" x2="450" y2="210" stroke="#5f6368" stroke-width="2"/>
+
+  <!-- ==================== LocalQueues ==================== -->
+
+  <!-- Arrow: CQ left -> LQ left -->
+  <line x1="250" y1="200" x2="250" y2="280" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Arrow: CQ right -> LQ right -->
+  <line x1="650" y1="200" x2="650" y2="280" stroke="#5f6368" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- research-queue -->
+  <rect x="100" y="285" width="300" height="55" rx="8" fill="url(#lqGrad)" stroke="#7b1fa2" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="250" y="312" text-anchor="middle" font-size="19" font-weight="bold" fill="#4a148c">research-queue</text>
+  <text x="250" y="332" text-anchor="middle" font-size="15" fill="#6a1b9a">ns: training-jobs</text>
+
+  <!-- production-queue -->
+  <rect x="500" y="285" width="300" height="55" rx="8" fill="url(#lqGrad)" stroke="#7b1fa2" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="650" y="312" text-anchor="middle" font-size="19" font-weight="bold" fill="#4a148c">production-queue</text>
+  <text x="650" y="332" text-anchor="middle" font-size="15" fill="#6a1b9a">ns: training-jobs</text>
+
+  <!-- ==================== Usage indicators ==================== -->
+
+  <!-- Research: HIGH usage -->
+  <rect x="120" y="355" width="260" height="50" rx="8" fill="url(#usageHighGrad)" stroke="#c62828" stroke-width="2" filter="url(#shadow)"/>
+  <text x="250" y="377" text-anchor="middle" font-size="14" font-weight="bold" fill="#b71c1c">consumedResources: HIGH</text>
+  <text x="250" y="396" text-anchor="middle" font-size="13" fill="#c62828">&#x2192; stays pending</text>
+
+  <!-- Usage bar (research) -->
+  <rect x="140" y="410" width="220" height="8" rx="4" fill="#ffcdd2"/>
+  <rect x="140" y="410" width="190" height="8" rx="4" fill="#e53935"/>
+
+  <!-- Production: LOW usage -->
+  <rect x="520" y="355" width="260" height="50" rx="8" fill="url(#usageLowGrad)" stroke="#2e7d32" stroke-width="2" filter="url(#shadow)"/>
+  <text x="650" y="377" text-anchor="middle" font-size="14" font-weight="bold" fill="#1b5e20">consumedResources: LOW</text>
+  <text x="650" y="396" text-anchor="middle" font-size="13" fill="#2e7d32">&#x2192; admitted first</text>
+
+  <!-- Usage bar (production) -->
+  <rect x="540" y="410" width="220" height="8" rx="4" fill="#c8e6c9"/>
+  <rect x="540" y="410" width="30" height="8" rx="4" fill="#43a047"/>
+
+  <!-- ==================== Admission arrow ==================== -->
+  <path d="M 500 382 C 470 360, 430 360, 400 382" stroke="#2e7d32" stroke-width="3" fill="none" marker-end="url(#arrowGreen)"/>
+  <text x="450" y="355" text-anchor="middle" font-size="14" font-weight="bold" fill="#2e7d32">lower usage wins</text>
+
+  <!-- ==================== Worker Node ==================== -->
+
+  <!-- Arrow: LQ left -> Node -->
+  <line x1="250" y1="418" x2="370" y2="448" stroke="#5f6368" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow)"/>
+
+  <!-- Arrow: LQ right -> Node -->
+  <line x1="650" y1="418" x2="530" y2="448" stroke="#5f6368" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow)"/>
+
+  <!-- Worker Node -->
+  <rect x="250" y="450" width="400" height="60" rx="8" fill="url(#nodeGrad)" stroke="#4285f4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="450" y="476" text-anchor="middle" font-size="18" font-weight="600" fill="#1a237e">Worker Node 1</text>
+  <text x="450" y="498" text-anchor="middle" font-size="15" fill="#3c4043">2&#xD7; NVIDIA A100-SXM4-40GB</text>
+</svg>

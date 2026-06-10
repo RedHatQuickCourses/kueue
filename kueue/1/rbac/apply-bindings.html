@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Apply RBAC Bindings :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="prev" href="verify-roles.html">
+    <link rel="next" href="test-admin.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../LABENV/index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../gpu-workloads/index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../fair-sharing/index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../mig/index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../mig/undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">RBAC</a></li>
+    <li><a href="apply-bindings.html">Apply Bindings</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Apply RBAC Bindings</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this section, you create the ClusterRoleBindings and RoleBindings that assign the Kueue roles to your users.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_references"><a class="anchor" href="#_references"></a>References</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding" target="_blank" rel="noopener">Kubernetes: RoleBinding and ClusterRoleBinding</a></p>
+</li>
+<li>
+<p><a href="https://docs.openshift.com/container-platform/latest/authentication/using-rbac.html" target="_blank" rel="noopener">OpenShift: Using RBAC</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#rbac-permissions" target="_blank" rel="noopener">Red Hat build of Kueue: Configuring Role-Based Permissions</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_lab_create_rbac_bindings"><a class="anchor" href="#_lab_create_rbac_bindings"></a>Lab: Create RBAC Bindings</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_1_apply_batch_admin_bindings"><a class="anchor" href="#_1_apply_batch_admin_bindings"></a>1. Apply batch admin bindings</h3>
+<div class="paragraph">
+<p>The admin bindings file contains two resources: a ClusterRoleBinding for cluster-wide Kueue access, and a RoleBinding for pod/log access in the <code>training-jobs</code> namespace.</p>
+</div>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Review <code>kueue-config/11-rbac-batch-admin.yaml</code> before applying:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding                              <i class="conum" data-value="1"></i><b>(1)</b>
+metadata:
+  name: kueue-batch-admin-binding
+subjects:
+- kind: User
+  name: admin                                         <i class="conum" data-value="2"></i><b>(2)</b>
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: kueue-batch-admin-role                        <i class="conum" data-value="3"></i><b>(3)</b>
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding                                     <i class="conum" data-value="4"></i><b>(4)</b>
+metadata:
+  name: admin-edit
+  namespace: training-jobs
+subjects:
+- kind: User
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: edit                                          <i class="conum" data-value="5"></i><b>(5)</b>
+  apiGroup: rbac.authorization.k8s.io</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>ClusterRoleBinding</code>&#8201;&#8212;&#8201;cluster-wide scope because ClusterQueues, ResourceFlavors, and WorkloadPriorityClasses are cluster-scoped resources.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Replace <code>admin</code> with the actual admin username on your cluster.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><code>kueue-batch-admin-role</code>&#8201;&#8212;&#8201;the aggregated ClusterRole deployed by the Kueue operator. Grants full CRUD on all Kueue resources and Jobs.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>A separate <code>RoleBinding</code> in the <code>training-jobs</code> namespace for pod/log access.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>The OpenShift <code>edit</code> ClusterRole fills the gap&#8201;&#8212;&#8201;Kueue roles don&#8217;t cover pods, logs, events, or configmaps.</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Apply the admin bindings:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f kueue-config/11-rbac-batch-admin.yaml</strong>
+clusterrolebinding.rbac.authorization.k8s.io/kueue-batch-admin-binding created
+rolebinding.rbac.authorization.k8s.io/admin-edit created</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_2_apply_batch_user_bindings"><a class="anchor" href="#_2_apply_batch_user_bindings"></a>2. Apply batch user bindings</h3>
+<div class="paragraph">
+<p>The user bindings file contains two RoleBindings, both scoped to the <code>training-jobs</code> namespace.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="title">Why RoleBinding and not ClusterRoleBinding for batch users?</div>
+<div class="paragraph">
+<p>This is a deliberate design choice with an important trade-off.</p>
+</div>
+<div class="paragraph">
+<p>A <strong>ClusterRoleBinding</strong> grants the ClusterRole&#8217;s permissions cluster-wide.
+A <strong>RoleBinding</strong> grants them only in the specified namespace.</p>
+</div>
+<div class="paragraph">
+<p>Using a RoleBinding means:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><span class="green"><strong>Intended:</strong></span> The user can only see LocalQueues, Workloads, and pods in <code>training-jobs</code>&#8201;&#8212;&#8201;not in other teams' namespaces.</p>
+</li>
+<li>
+<p><span class="red"><strong>Side effect:</strong></span> ClusterQueues are cluster-scoped resources. A RoleBinding <em>cannot</em> grant access to cluster-scoped resources, so the user&#8217;s <code>get, list, watch</code> permission on ClusterQueues silently has no effect. The user will see <code>Forbidden</code> when trying <code>oc get clusterqueues</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The Kueue project chose namespace isolation over ClusterQueue visibility.
+If your users need to see ClusterQueues, you would create a separate ClusterRoleBinding referencing <code>kueue-clusterqueue-viewer-role</code> for that user&#8201;&#8212;&#8201;but be aware this grants cluster-wide visibility.</p>
+</div>
+</div>
+</div>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Review <code>kueue-config/12-rbac-batch-user.yaml</code> before applying.
+Here is the first RoleBinding:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding                                     <i class="conum" data-value="1"></i><b>(1)</b>
+metadata:
+  name: kueue-batch-user-binding
+  namespace: training-jobs                             <i class="conum" data-value="2"></i><b>(2)</b>
+subjects:
+- kind: User
+  name: user1                                         <i class="conum" data-value="3"></i><b>(3)</b>
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: kueue-batch-user-role                         <i class="conum" data-value="4"></i><b>(4)</b>
+  apiGroup: rbac.authorization.k8s.io</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>RoleBinding</code> (not <code>ClusterRoleBinding</code>)&#8201;&#8212;&#8201;the batch user&#8217;s access is namespace-scoped, unlike the admin&#8217;s cluster-wide binding.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Scoped to <code>training-jobs</code> only. The user cannot see queues or workloads in other namespaces.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Replace <code>user1</code> with the actual batch user&#8217;s username on your cluster.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><code>kueue-batch-user-role</code>&#8201;&#8212;&#8201;grants full CRUD on Jobs, plus read-only access (<code>get</code>, <code>list</code>, <code>watch</code>) to LocalQueues, Workloads, and ClusterQueues. Because this is a <code>RoleBinding</code> (not a <code>ClusterRoleBinding</code>), the cluster-scoped ClusterQueue permission does not take effect.
+<div class="paragraph">
+<p>The file also contains a second RoleBinding (<code>user1-edit</code>) that grants the <code>edit</code> ClusterRole in <code>training-jobs</code>&#8201;&#8212;&#8201;the same pattern as the admin bindings above, giving the user access to pods, logs, and events.</p>
+</div></td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Apply the user bindings:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f kueue-config/12-rbac-batch-user.yaml</strong>
+rolebinding.rbac.authorization.k8s.io/kueue-batch-user-binding created
+rolebinding.rbac.authorization.k8s.io/user1-edit created</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_3_verify_all_bindings"><a class="anchor" href="#_3_verify_all_bindings"></a>3. Verify all bindings</h3>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check the cluster-wide binding:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get clusterrolebinding kueue-batch-admin-binding</strong>
+NAME                        ROLE                                 AGE
+kueue-batch-admin-binding   ClusterRole/kueue-batch-admin-role   71s</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Check the namespace-scoped bindings:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get rolebindings -n training-jobs</strong>
+NAME                        ROLE                                             AGE
+default-scc-restricted-v3   ClusterRole/system:openshift:scc:restricted-v3   29h
+admin-edit                  ClusterRole/edit                                 87s
+kueue-batch-user-binding    ClusterRole/kueue-batch-user-role                50s
+user1-edit                  ClusterRole/edit                                 49s
+openshift-pipelines-edit    ClusterRole/edit                                 29h
+pipelines-scc-rolebinding   ClusterRole/pipelines-scc-clusterrole            29h
+system:deployers            ClusterRole/system:deployer                      29h
+system:image-builders       ClusterRole/system:image-builder                 29h
+system:image-pullers        ClusterRole/system:image-puller                  29h</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="verify-roles.html">Verify Roles</a></span>
+  <span class="next"><a href="test-admin.html">Test Admin</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script defer src="../../../_/js/vendor/tabs.js"></script>
+<script defer src="../../../_/js/vendor/reading-time.js"></script>
+  </body>
+</html>

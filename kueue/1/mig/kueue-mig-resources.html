@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Create Kueue MIG Resources :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="prev" href="verify-mig.html">
+    <link rel="next" href="mig-workloads.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../LABENV/index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../gpu-workloads/index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../fair-sharing/index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../rbac/index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">MIG</a></li>
+    <li><a href="kueue-mig-resources.html">Kueue MIG Resources</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Create Kueue MIG Resources</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>With MIG resources visible on the node, you now create the Kueue resources to manage them: update the existing A100 ClusterQueue quota, then create a new ResourceFlavor, ClusterQueue, and LocalQueue for MIG instances.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_references"><a class="anchor" href="#_references"></a>References</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/resource_flavor/" target="_blank" rel="noopener">Kueue: ResourceFlavor</a></p>
+</li>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/" target="_blank" rel="noopener">Kueue: ClusterQueue</a></p>
+</li>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/local_queue/" target="_blank" rel="noopener">Kueue: LocalQueue</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-resourceflavors_configuring-quotas" target="_blank" rel="noopener">Red Hat build of Kueue: Configuring Resource Flavors</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-clusterqueues_configuring-quotas" target="_blank" rel="noopener">Red Hat build of Kueue: Configuring Cluster Queues</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-localqueues_configuring-quotas" target="_blank" rel="noopener">Red Hat build of Kueue: Configuring Local Queues</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_lab_configure_kueue_for_mig"><a class="anchor" href="#_lab_configure_kueue_for_mig"></a>Lab: Configure Kueue for MIG</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_1_update_the_a100_clusterqueue_quota"><a class="anchor" href="#_1_update_the_a100_clusterqueue_quota"></a>1. Update the A100 ClusterQueue quota</h3>
+<div class="paragraph">
+<p>Since GPU 0 is now MIG-partitioned, worker-1 only has 3 whole GPUs instead of 4.
+Update the <code>a100-cluster-queue</code> to reflect this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc patch clusterqueue a100-cluster-queue --type merge</strong> \
+  <strong>-p '{"spec":{"resourceGroups":[{"coveredResources":["cpu","memory","nvidia.com/gpu"],"flavors":[{"name":"a100-gpu","resources":[{"name":"cpu","nominalQuota":"16"},{"name":"memory","nominalQuota":"64Gi"},{"name":"nvidia.com/gpu","nominalQuota":"3"}]}]}]}}'</strong>
+clusterqueue.kueue.x-k8s.io/a100-cluster-queue patched</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Verify:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc describe clusterqueue a100-cluster-queue | grep -A 5 "nvidia.com/gpu"</strong>
+      nvidia.com/gpu
+    Flavors:
+      Name:  a100-gpu
+      Resources:
+        Name:           cpu
+        Nominal Quota:  16
+--
+        Name:           nvidia.com/gpu
+        <strong>Nominal Quota:  3</strong>
+  Stop Policy:          None
+...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The GPU nominal quota should now show <code>3</code> instead of <code>4</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_2_create_mig_resourceflavor"><a class="anchor" href="#_2_create_mig_resourceflavor"></a>2. Create MIG ResourceFlavor</h3>
+<div class="paragraph">
+<p>Create a ResourceFlavor for MIG instances.
+It targets the same physical node as <code>a100-gpu</code> (same nodeLabels and tolerations), but Kueue uses it for MIG resource types.</p>
+</div>
+<div class="paragraph">
+<p>Review <code>kueue-config/6-mig-resource-flavors.yaml</code> before applying:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: a100-mig                                       <i class="conum" data-value="1"></i><b>(1)</b>
+spec:
+  nodeLabels:
+    nvidia.com/gpu.product: NVIDIA-A100-SXM4-40GB      <i class="conum" data-value="2"></i><b>(2)</b>
+  tolerations:
+  - key: "nvidia.com/gpu"                              <i class="conum" data-value="3"></i><b>(3)</b>
+    operator: "Exists"
+    effect: "NoSchedule"</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The flavor name <code>a100-mig</code> distinguishes it from the <code>a100-gpu</code> flavor used for whole GPUs. ClusterQueues reference this name.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Same nodeLabel as the <code>a100-gpu</code> flavor&#8201;&#8212;&#8201;both target the same physical A100 node. The difference is in which resource types the ClusterQueue covers, not node selection.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The toleration allows MIG workloads to schedule on GPU-tainted nodes.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f kueue-config/6-mig-resource-flavors.yaml</strong>
+resourceflavor.kueue.x-k8s.io/a100-mig created</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Verify:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get resourceflavors</strong>
+NAME                AGE
+a100-gpu            24h
+<strong>a100-mig            15s</strong>
+default-flavor      28h
+nvidia-gpu-flavor   28h
+t4-gpu              24h</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>You should see five flavors. The <code>default-flavor</code> and <code>nvidia-gpu-flavor</code> entries are auto-created by the Red Hat OpenShift AI (RHOAI) operator when it initializes Kueue.
+They have empty specs and support the RHOAI default LocalQueue.
+You can ignore them; they do not interfere with the MIG configuration.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_3_create_mig_clusterqueue"><a class="anchor" href="#_3_create_mig_clusterqueue"></a>3. Create MIG ClusterQueue</h3>
+<div class="paragraph">
+<p>Review <code>kueue-config/7-mig-cluster-queue.yaml</code> before applying:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: mig-cluster-queue
+spec:
+  namespaceSelector: {}
+  preemption:
+    withinClusterQueue: LowerPriority                  <i class="conum" data-value="1"></i><b>(1)</b>
+  resourceGroups:
+  - coveredResources: ["cpu", "memory",                <i class="conum" data-value="2"></i><b>(2)</b>
+      "nvidia.com/mig-3g.20gb",
+      "nvidia.com/mig-2g.10gb",
+      "nvidia.com/mig-1g.5gb"]
+    flavors:
+    - name: a100-mig                                   <i class="conum" data-value="3"></i><b>(3)</b>
+      resources:
+      - name: cpu
+        nominalQuota: 8
+      - name: memory
+        nominalQuota: 32Gi
+      - name: nvidia.com/mig-3g.20gb                   <i class="conum" data-value="4"></i><b>(4)</b>
+        nominalQuota: 1
+      - name: nvidia.com/mig-2g.10gb
+        nominalQuota: 1
+      - name: nvidia.com/mig-1g.5gb
+        nominalQuota: 1</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>LowerPriority</code> preemption allows high-priority jobs to evict low-priority ones within the same ClusterQueue (exercised in the next section).</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Each MIG profile is listed as a separate covered resource. Kueue tracks and admits them independently&#8201;&#8212;&#8201;a job requesting <code>mig-3g.20gb</code> does not consume <code>mig-1g.5gb</code> quota.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>References the <code>a100-mig</code> ResourceFlavor created in step 2.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Each MIG quota is set to <code>1</code>, matching exactly what the MIG partition produces. If you partitioned GPU 0 differently, adjust these quotas to match.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f kueue-config/7-mig-cluster-queue.yaml</strong>
+clusterqueue.kueue.x-k8s.io/mig-cluster-queue created</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This creates:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 14.2857%;">
+<col style="width: 42.8571%;">
+<col style="width: 14.2858%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ClusterQueue</th>
+<th class="tableblock halign-left valign-top">Flavor</th>
+<th class="tableblock halign-left valign-top">MIG Quotas</th>
+<th class="tableblock halign-left valign-top">Preemption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-cluster-queue</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>a100-mig</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1x <code>3g.20gb</code>, 1x <code>2g.10gb</code>, 1x <code>1g.5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LowerPriority</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>The quotas match exactly what the MIG partition produces.
+Each MIG resource type is listed as a separate covered resource so Kueue can track and admit them independently.</p>
+</div>
+<div class="paragraph">
+<p>Verify:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get clusterqueue -o wide</strong>
+NAME                 COHORT   STRATEGY         PENDING WORKLOADS   ADMITTED WORKLOADS
+a100-cluster-queue            BestEffortFIFO   0                   0
+default                       BestEffortFIFO   0                   0
+<strong>mig-cluster-queue</strong>             BestEffortFIFO   0                   0
+t4-cluster-queue              BestEffortFIFO   0                   0</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+For more detailed configuration you can also run <strong>oc describe clusterqueue mig-cluster-queue</strong>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_4_create_mig_localqueue"><a class="anchor" href="#_4_create_mig_localqueue"></a>4. Create MIG LocalQueue</h3>
+<div class="paragraph">
+<p>Review <code>kueue-config/8-mig-local-queue.yaml</code> before applying:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: mig-training-queue                             <i class="conum" data-value="1"></i><b>(1)</b>
+  namespace: training-jobs                             <i class="conum" data-value="2"></i><b>(2)</b>
+spec:
+  clusterQueue: mig-cluster-queue                      <i class="conum" data-value="3"></i><b>(3)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>A descriptive name that developers use in their Job&#8217;s <code>kueue.x-k8s.io/queue-name</code> label.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Scoped to the <code>training-jobs</code> namespace. Jobs in other namespaces cannot submit to this queue.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Points to the MIG ClusterQueue created in step 3. Kueue checks MIG quotas when admitting workloads from this queue.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f kueue-config/8-mig-local-queue.yaml</strong>
+localqueue.kueue.x-k8s.io/mig-training-queue created</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This creates:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">LocalQueue</th>
+<th class="tableblock halign-left valign-top">Namespace</th>
+<th class="tableblock halign-left valign-top">Backing ClusterQueue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-training-queue</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>training-jobs</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-cluster-queue</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Training jobs can now submit to either <code>training-queue</code> (whole A100 GPUs) or <code>mig-training-queue</code> (MIG instances) depending on how much GPU they need.</p>
+</div>
+<div class="paragraph">
+<p>Verify:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get localqueues -n training-jobs</strong>
+NAME                 CLUSTERQUEUE         PENDING WORKLOADS   ADMITTED WORKLOADS
+default              default              0                   0
+<strong>mig-training-queue   mig-cluster-queue</strong>    0                   0
+training-queue       a100-cluster-queue   0                   0</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You should see three LocalQueues: The unused <code>default</code> queue, <code>training-queue</code> and <code>mig-training-queue</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_5_verify_the_full_mig_kueue_configuration"><a class="anchor" href="#_5_verify_the_full_mig_kueue_configuration"></a>5. Verify the full MIG + Kueue configuration</h3>
+<div class="paragraph">
+<p>Check that everything is wired up:</p>
+</div>
+<div class="paragraph">
+<p>Node resources should show both whole GPUs and MIG instances:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get node $WORKER_NODE1 -o jsonpath='{.status.allocatable}' | python3 -m json.tool | grep -E 'gpu|mig'</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All ResourceFlavors should include <code>a100-gpu</code>, <code>t4-gpu</code>, and <code>a100-mig</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get resourceflavors</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All ClusterQueues should be active:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get clusterqueues</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The A100 queue should show 3 GPUs (not 4):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc describe clusterqueue a100-cluster-queue | grep -A 3 "nvidia.com/gpu"</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The MIG queue should show 1 of each MIG profile:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc describe clusterqueue mig-cluster-queue</strong></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>LocalQueues in <code>training-jobs</code> should show <code>training-queue</code> and <code>mig-training-queue</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get localqueues -n training-jobs</strong></code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_mig_architecture_summary"><a class="anchor" href="#_mig_architecture_summary"></a>MIG Architecture Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>After completing the MIG configuration, worker-1 now serves two types of GPU workloads through separate Kueue pipelines.
+GPU 0 is MIG-partitioned into three isolated instances, each managed by <code>mig-cluster-queue</code> through the <code>a100-mig</code> flavor.
+GPUs 1-3 remain as whole devices, managed by <code>a100-cluster-queue</code> through the <code>a100-gpu</code> flavor.
+Both pipelines feed into the <code>training-jobs</code> namespace, so developers choose their queue based on workload size.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="_images/mig-architecture-summary.svg" alt="MIG + Kueue architecture on worker-1" width="1100">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_mig_configuration_summary"><a class="anchor" href="#_mig_configuration_summary"></a>MIG Configuration Summary</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 50%;">
+<col style="width: 16.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">File</th>
+<th class="tableblock halign-left valign-top">Resources</th>
+<th class="tableblock halign-left valign-top">Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>6a-mig-node-config.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MIG labels + partition annotation on worker-1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Node</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>6b-mig-topology-update.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Topology ConfigMap with MIG profiles as <code>otherDevices</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace (<code>gpu-operator</code>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>6-mig-resource-flavors.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>a100-mig</code> flavor targeting A100 nodes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cluster</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>7-mig-cluster-queue.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-cluster-queue</code> with 3 MIG profile quotas</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cluster</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>8-mig-local-queue.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-training-queue</code> in <code>training-jobs</code> namespace</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sidebarblock">
+<div class="content">
+<div class="title">Production Considerations</div>
+<div class="paragraph">
+<p>In production with real NVIDIA GPUs, you would typically use the NVIDIA GPU Operator&#8217;s MIG Manager to handle MIG partitioning declaratively via <code>MIGConfig</code> resources.
+The Kueue configuration (ResourceFlavors, ClusterQueues, LocalQueues) remains the same&#8201;&#8212;&#8201;Kueue manages quota and admission regardless of how the GPU resources are provisioned.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="verify-mig.html">Verify MIG</a></span>
+  <span class="next"><a href="mig-workloads.html">MIG Workloads</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script defer src="../../../_/js/vendor/tabs.js"></script>
+<script defer src="../../../_/js/vendor/reading-time.js"></script>
+  </body>
+</html>

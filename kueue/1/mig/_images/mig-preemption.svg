@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 890" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <linearGradient id="gpuGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fafafa"/>
+      <stop offset="100%" stop-color="#e0e0e0"/>
+    </linearGradient>
+    <linearGradient id="lowGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a5d6a7"/>
+      <stop offset="100%" stop-color="#66bb6a"/>
+    </linearGradient>
+    <linearGradient id="lowRed" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ef9a9a"/>
+      <stop offset="100%" stop-color="#ef5350"/>
+    </linearGradient>
+    <linearGradient id="lowPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ce93d8"/>
+      <stop offset="100%" stop-color="#ab47bc"/>
+    </linearGradient>
+    <linearGradient id="highOrange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffcc80"/>
+      <stop offset="100%" stop-color="#ff9800"/>
+    </linearGradient>
+    <linearGradient id="preemptedGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e0e0e0"/>
+      <stop offset="100%" stop-color="#bdbdbd"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.12"/>
+    </filter>
+    <marker id="arrowDown" markerWidth="12" markerHeight="10" refX="6" refY="10" orient="auto">
+      <path d="M0,0 L12,0 L6,10 Z" fill="#d32f2f"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="40" text-anchor="middle" font-size="32" font-weight="bold" fill="#202124">MIG Priority Preemption</text>
+  <text x="550" y="72" text-anchor="middle" font-size="20" fill="#5f6368">High-priority job preempts a low-priority job on the same MIG slice</text>
+
+  <!-- ========== BEFORE PREEMPTION ========== -->
+  <rect x="30" y="100" width="1040" height="280" rx="14" fill="url(#gpuGrad)" stroke="#616161" stroke-width="2" filter="url(#shadow)"/>
+  <text x="550" y="138" text-anchor="middle" font-size="22" font-weight="bold" fill="#424242">Before preemption: all low-priority jobs fill GPU 0</text>
+
+  <!-- 3g.20gb LOW -->
+  <rect x="70" y="165" width="320" height="140" rx="10" fill="url(#lowGreen)" stroke="#2e7d32" stroke-width="2" filter="url(#shadow)"/>
+  <text x="230" y="200" text-anchor="middle" font-size="22" font-weight="bold" fill="#fff">mig-fill-3g-20gb</text>
+  <text x="230" y="232" text-anchor="middle" font-size="18" fill="#fff">nvidia.com/mig-3g.20gb</text>
+  <rect x="140" y="250" width="180" height="38" rx="8" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+  <text x="230" y="276" text-anchor="middle" font-size="20" font-weight="bold" fill="#1b5e20">LOW (100)</text>
+
+  <!-- 2g.10gb LOW -->
+  <rect x="420" y="165" width="280" height="140" rx="10" fill="url(#lowRed)" stroke="#c62828" stroke-width="2" filter="url(#shadow)"/>
+  <text x="560" y="200" text-anchor="middle" font-size="22" font-weight="bold" fill="#fff">mig-fill-2g-10gb</text>
+  <text x="560" y="232" text-anchor="middle" font-size="18" fill="#fff">nvidia.com/mig-2g.10gb</text>
+  <rect x="480" y="250" width="160" height="38" rx="8" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+  <text x="560" y="276" text-anchor="middle" font-size="20" font-weight="bold" fill="#b71c1c">LOW (100)</text>
+
+  <!-- 1g.5gb LOW -->
+  <rect x="730" y="165" width="300" height="140" rx="10" fill="url(#lowPurple)" stroke="#7b1fa2" stroke-width="2" filter="url(#shadow)"/>
+  <text x="880" y="200" text-anchor="middle" font-size="22" font-weight="bold" fill="#fff">mig-fill-1g-5gb</text>
+  <text x="880" y="232" text-anchor="middle" font-size="18" fill="#fff">nvidia.com/mig-1g.5gb</text>
+  <rect x="800" y="250" width="160" height="38" rx="8" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+  <text x="880" y="276" text-anchor="middle" font-size="20" font-weight="bold" fill="#4a148c">LOW (100)</text>
+
+  <!-- ========== PREEMPTION TRANSITION ========== -->
+  <!-- Thick arrow shaft -->
+  <rect x="215" y="388" width="30" height="60" rx="2" fill="#d32f2f"/>
+  <!-- Arrow head (triangle) -->
+  <polygon points="175,448 230,500 285,448" fill="#d32f2f"/>
+  <!-- Label -->
+  <rect x="310" y="400" width="420" height="50" rx="10" fill="#ffebee" stroke="#d32f2f" stroke-width="2" filter="url(#shadow)"/>
+  <text x="520" y="433" text-anchor="middle" font-size="22" font-weight="bold" fill="#c62828">PREEMPTED by high-priority job</text>
+
+  <!-- ========== AFTER PREEMPTION ========== -->
+  <rect x="30" y="520" width="1040" height="280" rx="14" fill="url(#gpuGrad)" stroke="#616161" stroke-width="2" filter="url(#shadow)"/>
+  <text x="550" y="558" text-anchor="middle" font-size="22" font-weight="bold" fill="#424242">After preemption: high-priority job takes the 3g.20gb slot</text>
+
+  <!-- 3g.20gb HIGH (replaced) -->
+  <rect x="70" y="585" width="320" height="140" rx="10" fill="url(#highOrange)" stroke="#e65100" stroke-width="2.5" filter="url(#shadow)"/>
+  <text x="230" y="618" text-anchor="middle" font-size="22" font-weight="bold" fill="#fff">mig-preempt-high-3g</text>
+  <text x="230" y="650" text-anchor="middle" font-size="18" fill="#fff">nvidia.com/mig-3g.20gb</text>
+  <rect x="140" y="668" width="180" height="38" rx="8" fill="rgba(255,255,255,0.35)" stroke="rgba(255,255,255,0.6)" stroke-width="1"/>
+  <text x="230" y="694" text-anchor="middle" font-size="20" font-weight="bold" fill="#bf360c">HIGH (1000)</text>
+
+  <!-- 2g.10gb LOW (unchanged) -->
+  <rect x="420" y="585" width="280" height="140" rx="10" fill="url(#lowRed)" stroke="#c62828" stroke-width="2" filter="url(#shadow)"/>
+  <text x="560" y="618" text-anchor="middle" font-size="22" font-weight="bold" fill="#fff">mig-fill-2g-10gb</text>
+  <text x="560" y="650" text-anchor="middle" font-size="18" fill="#fff">nvidia.com/mig-2g.10gb</text>
+  <rect x="480" y="668" width="160" height="38" rx="8" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+  <text x="560" y="694" text-anchor="middle" font-size="20" font-weight="bold" fill="#b71c1c">LOW (100)</text>
+
+  <!-- 1g.5gb LOW (unchanged) -->
+  <rect x="730" y="585" width="300" height="140" rx="10" fill="url(#lowPurple)" stroke="#7b1fa2" stroke-width="2" filter="url(#shadow)"/>
+  <text x="880" y="618" text-anchor="middle" font-size="22" font-weight="bold" fill="#fff">mig-fill-1g-5gb</text>
+  <text x="880" y="650" text-anchor="middle" font-size="18" fill="#fff">nvidia.com/mig-1g.5gb</text>
+  <rect x="800" y="668" width="160" height="38" rx="8" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+  <text x="880" y="694" text-anchor="middle" font-size="20" font-weight="bold" fill="#4a148c">LOW (100)</text>
+
+  <!-- "unchanged" labels for 2g and 1g -->
+  <text x="560" y="748" text-anchor="middle" font-size="16" font-style="italic" fill="#757575">unchanged</text>
+  <text x="880" y="748" text-anchor="middle" font-size="16" font-style="italic" fill="#757575">unchanged</text>
+
+  <!-- ========== Bottom info bar ========== -->
+  <rect x="60" y="820" width="980" height="46" rx="10" fill="#e8eaf6" stroke="#3f51b5" stroke-width="1.5"/>
+  <text x="550" y="850" text-anchor="middle" font-size="18" font-weight="bold" fill="#283593">mig-cluster-queue (withinClusterQueue: LowerPriority)  |  mig-training-queue (training-jobs)</text>
+</svg>

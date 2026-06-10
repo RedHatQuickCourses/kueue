@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>MIG Priority Preemption :: GPU Quota Management with Kueue on Red Hat OpenShift AI</title>
+    <link rel="prev" href="mig-workloads.html">
+    <link rel="next" href="troubleshooting.html">
+    <meta name="generator" content="Antora 3.2.0-alpha.12">
+    <link rel="stylesheet" href="../../../_/css/site.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/tabs.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/collapsible.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/reading-time.css">
+    <link rel="stylesheet" href="../../../_/css/vendor/audio-transcript.css">
+    <script>var uiRootPath = '../../../_'</script>
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://www.redhat.com" target="_blank"><img src="../../../_/img/redhat-logo.png" height="40px" alt="Red Hat"></a>
+      <a class="navbar-item" style="font-size: 24px; color: white" href="../../..">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="https://github.com/RedHatQuickCourses/kueue/issues" target="_blank">Report Issues</a>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="kueue" data-version="1">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <h3 class="title"><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../LABENV/index.html">Lab Environment</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../platform-setup/index.html">Platform Setup</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/rhoai-install.html">Install RHOAI</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/fake-gpu-operator.html">Fake GPU Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/verify-fake-gpus.html">Verify Fake GPUs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../platform-setup/troubleshooting.html">Troubleshooting</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-install/index.html">Install Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/install-operator.html">Install Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/configure-operator.html">Configure Operator</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-install/verify-crds.html">Verify CRDs</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../kueue-config/index.html">Configure Kueue</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/namespaces.html">Namespaces</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/resource-flavors.html">ResourceFlavors</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/cluster-queues.html">ClusterQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/local-queues.html">LocalQueues</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/priority-classes.html">Priority Classes</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../kueue-config/verify-config.html">Verify Configuration</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../gpu-workloads/index.html">GPU Workloads</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/fifo-jobs.html">FIFO Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/priority-jobs.html">Priority Jobs</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../gpu-workloads/inference-deployment.html">Inference Deployment</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../cohort-borrowing/index.html">Cohort Borrowing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cohort-setup.html">Cohort Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/borrowing.html">Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-failure.html">Reclaim Failure</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/reclaim-fix.html">Reclaim Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../cohort-borrowing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../fair-sharing/index.html">Fair Sharing</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/enable-fair-sharing.html">Enable Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-setup.html">DRS Setup</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-borrowing.html">DRS Borrowing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/drs-preemption.html">DRS Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/admission-fair-sharing.html">Admission Fair Sharing</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../fair-sharing/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">MIG</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-faker-fix.html">mig-faker Fix</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-node-config.html">MIG Node Config</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="topology-update.html">Topology Update</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="verify-mig.html">Verify MIG</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="kueue-mig-resources.html">Kueue MIG Resources</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="mig-workloads.html">MIG Workloads</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="mig-preemption.html">MIG Preemption</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="troubleshooting.html">Troubleshooting</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="undo-mig.html">Undo MIG</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../rbac/index.html">RBAC</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/verify-roles.html">Verify Roles</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/apply-bindings.html">Apply Bindings</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-admin.html">Test Admin</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/test-user.html">Test User</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../rbac/cleanup.html">Clean Up</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../cluster-reset/index.html">Cluster Reset</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../appendix/appendix.html">Appendix</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">GPU Quota Management with Kueue on Red Hat OpenShift AI</span>
+    <span class="version">1</span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <a class="title" href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a>
+      <ul class="versions">
+        <li class="version is-current is-latest">
+          <a href="../index.html">1</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">GPU Quota Management with Kueue on Red Hat OpenShift AI</a></li>
+    <li><a href="index.html">MIG</a></li>
+    <li><a href="mig-preemption.html">MIG Preemption</a></li>
+  </ul>
+</nav>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">MIG Priority Preemption</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In the previous section, the MIG workloads all fit simultaneously&#8201;&#8212;&#8201;one job per profile, no contention.
+But what happens when two jobs compete for the same MIG slice?
+The <code>mig-cluster-queue</code> has <code>withinClusterQueue: LowerPriority</code> preemption, which means a high-priority job can evict a low-priority one occupying the same MIG resource.</p>
+</div>
+<div class="paragraph">
+<p>In this exercise, low-priority jobs fill all three MIG slots.
+Then a high-priority job arrives requesting the largest slice (<code>3g.20gb</code>).
+Kueue preempts the low-priority job on that slice and admits the high-priority one in its place.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_mig_preemption_works"><a class="anchor" href="#_how_mig_preemption_works"></a>How MIG Preemption Works</h2>
+<div class="sectionbody">
+<div class="imageblock">
+<div class="content">
+<img src="_images/mig-preemption.svg" alt="MIG priority preemption showing before and after states" width="1100">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_prerequisites"><a class="anchor" href="#_prerequisites"></a>Prerequisites</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This exercise requires the MIG configuration from the previous sections.
+Ensure:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Worker-1 has MIG labels and annotations applied</p>
+</li>
+<li>
+<p><code>mig-cluster-queue</code>, <code>a100-mig</code> flavor, and <code>mig-training-queue</code> exist</p>
+</li>
+<li>
+<p>WorkloadPriorityClasses (<code>low-priority</code>, <code>high-priority</code>) exist from <a href="../kueue-config/priority-classes.html" class="xref page">Create WorkloadPriorityClasses^</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Clean up any workloads from previous exercises:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc delete jobs --all -n training-jobs 2&gt;/dev/null</strong></code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_references"><a class="anchor" href="#_references"></a>References</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/cluster_queue/#preemption" target="_blank" rel="noopener">Kueue: Preemption</a></p>
+</li>
+<li>
+<p><a href="https://kueue.sigs.k8s.io/docs/concepts/workload/#priority" target="_blank" rel="noopener">Kueue: Workload Priority</a></p>
+</li>
+<li>
+<p><a href="https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/" target="_blank" rel="noopener">Kubernetes: Pod Priority and Preemption</a></p>
+</li>
+<li>
+<p><a href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html-single/ai_workloads/index#configuring-quotas" target="_blank" rel="noopener">Red Hat build of Kueue: Configuring Quotas</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_lab_mig_priority_preemption_exercise"><a class="anchor" href="#_lab_mig_priority_preemption_exercise"></a>Lab: MIG Priority Preemption Exercise</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_1_fill_all_mig_slots_with_low_priority_jobs"><a class="anchor" href="#_1_fill_all_mig_slots_with_low_priority_jobs"></a>1. Fill all MIG slots with low-priority jobs</h3>
+<div class="paragraph">
+<p>Submit three low-priority jobs, one per MIG profile.
+This saturates all MIG capacity on GPU 0.</p>
+</div>
+<div class="paragraph">
+<p>Review <code>workloads/job-mig-fill-low.yaml</code> before applying.
+The file contains three Jobs; here is one representative Job:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mig-fill-3g-20gb                              <i class="conum" data-value="1"></i><b>(1)</b>
+  namespace: training-jobs
+  labels:
+    kueue.x-k8s.io/queue-name: mig-training-queue
+    kueue.x-k8s.io/priority-class: low-priority       <i class="conum" data-value="2"></i><b>(2)</b>
+spec:
+  suspend: true
+  template:
+    metadata:
+      annotations:
+        run.ai/simulated-gpu-utilization: "70-90"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: mig-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        command: ["/bin/bash", "-c"]
+        args: [...]
+        resources:
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+            nvidia.com/mig-3g.20gb: "1"                <i class="conum" data-value="3"></i><b>(3)</b>
+          limits:
+            nvidia.com/mig-3g.20gb: "1"</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Each fill job is named after the MIG profile it occupies.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><code>low-priority</code> (value 100)&#8201;&#8212;&#8201;these jobs will be preempted when a higher-priority job arrives requesting the same MIG profile.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Requests the <code>3g.20gb</code> MIG slice. The other two Jobs in the file request <code>mig-2g.10gb</code> and <code>mig-1g.5gb</code> respectively.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f workloads/job-mig-fill-low.yaml</strong>
+job.batch/mig-fill-3g-20gb created
+job.batch/mig-fill-2g-10gb created
+job.batch/mig-fill-1g-5gb created</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This creates:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Job</th>
+<th class="tableblock halign-left valign-top">MIG Resource</th>
+<th class="tableblock halign-left valign-top">Priority</th>
+<th class="tableblock halign-left valign-top">Value</th>
+<th class="tableblock halign-left valign-top">Expected Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-fill-3g-20gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/mig-3g.20gb: 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>low-priority</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">100</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Admitted&#8201;&#8212;&#8201;fills 3g.20gb slot</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-fill-2g-10gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/mig-2g.10gb: 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>low-priority</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">100</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Admitted&#8201;&#8212;&#8201;fills 2g.10gb slot</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-fill-1g-5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/mig-1g.5gb: 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>low-priority</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">100</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Admitted&#8201;&#8212;&#8201;fills 1g.5gb slot</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Wait for all three to be admitted and running:</p>
+</div>
+<div class="paragraph">
+<p>All three workloads should show ADMITTED:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get workloads -n training-jobs</strong>
+NAME                         QUEUE                RESERVED IN         ADMITTED   FINISHED   AGE
+job-mig-fill-1g-5gb-b1bc4    mig-training-queue   mig-cluster-queue   True                  18s
+job-mig-fill-2g-10gb-6983f   mig-training-queue   mig-cluster-queue   True                  19s
+job-mig-fill-3g-20gb-7882b   mig-training-queue   mig-cluster-queue   True                  20s</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All three pods should be running on the A100 node:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n training-jobs -o wide</strong>
+NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE                     NOMINATED NODE   READINESS GATES
+mig-fill-1g-5gb-jv48s    1/1     Running   0          35s   10.235.0.79   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+mig-fill-2g-10gb-j7rgq   1/1     Running   0          36s   10.235.0.78   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+mig-fill-3g-20gb-vll49   1/1     Running   0          37s   10.235.0.77   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Verify that MIG capacity is fully consumed&#8201;&#8212;&#8201;all three should show Total 1:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc describe clusterqueue mig-cluster-queue | sed -n '/Flavors Usage:/,/Pending Workloads:/p' | grep -A 1 "nvidia.com/mig"</strong>
+      Name:             nvidia.com/mig-1g.5gb
+      Total:            1
+--
+      Name:             nvidia.com/mig-2g.10gb
+      Total:            1
+--
+      Name:             nvidia.com/mig-3g.20gb
+      Total:            1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All three MIG profiles show <code>Total: 1</code>&#8201;&#8212;&#8201;no capacity remaining.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_2_submit_a_high_priority_job_to_trigger_preemption"><a class="anchor" href="#_2_submit_a_high_priority_job_to_trigger_preemption"></a>2. Submit a high-priority job to trigger preemption</h3>
+<div class="paragraph">
+<p>Now submit a high-priority job that requests the same <code>3g.20gb</code> MIG slice.
+Since the slot is occupied by a low-priority job and the ClusterQueue has <code>withinClusterQueue: LowerPriority</code>, Kueue preempts the low-priority job.</p>
+</div>
+<div class="paragraph">
+<p>Review <code>workloads/job-mig-preempt-high.yaml</code> before applying:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mig-preempt-high-3g                           <i class="conum" data-value="1"></i><b>(1)</b>
+  namespace: training-jobs
+  labels:
+    kueue.x-k8s.io/queue-name: mig-training-queue
+    kueue.x-k8s.io/priority-class: high-priority      <i class="conum" data-value="2"></i><b>(2)</b>
+spec:
+  suspend: true
+  template:
+    metadata:
+      annotations:
+        run.ai/simulated-gpu-utilization: "80-95"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: mig-workload
+        image: registry.access.redhat.com/ubi9/ubi
+        command: ["/bin/bash", "-c"]
+        args: [...]
+        resources:
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+            nvidia.com/mig-3g.20gb: "1"                <i class="conum" data-value="3"></i><b>(3)</b>
+          limits:
+            nvidia.com/mig-3g.20gb: "1"</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The job name indicates it is a high-priority preemption job targeting the <code>3g</code> profile.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><code>high-priority</code> (value 1000)&#8201;&#8212;&#8201;10x higher than the <code>low-priority</code> jobs filling the slots. This triggers Kueue&#8217;s <code>LowerPriority</code> preemption.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Requests the same <code>mig-3g.20gb</code> resource as <code>mig-fill-3g-20gb</code>. Since quota is 1 and the slot is occupied by a lower-priority job, Kueue preempts it.</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc apply -f workloads/job-mig-preempt-high.yaml</strong>
+job.batch/mig-preempt-high-3g created</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This creates:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 12.5%;">
+<col style="width: 12.5%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Job</th>
+<th class="tableblock halign-left valign-top">MIG Resource</th>
+<th class="tableblock halign-left valign-top">Priority</th>
+<th class="tableblock halign-left valign-top">Value</th>
+<th class="tableblock halign-left valign-top">Expected Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-preempt-high-3g</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>nvidia.com/mig-3g.20gb: 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>high-priority</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Preempts</strong> <code>mig-fill-3g-20gb</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_3_verify_preemption"><a class="anchor" href="#_3_verify_preemption"></a>3. Verify preemption</h3>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Confirm the high-priority job replaced the low-priority one:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get workloads -n training-jobs</strong>
+job-mig-fill-1g-5gb-b1bc4       mig-training-queue   mig-cluster-queue   True                  2m40s
+job-mig-fill-2g-10gb-6983f      mig-training-queue   mig-cluster-queue   True                  2m41s
+job-mig-fill-3g-20gb-7882b      mig-training-queue                       False                 2m42s
+job-mig-preempt-high-3g-42a9f   mig-training-queue   mig-cluster-queue   True                  20s</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Expected state:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 16.6666%;">
+<col style="width: 50.0001%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Workload</th>
+<th class="tableblock halign-left valign-top">Status</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-preempt-high-3g</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ADMITTED</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">High priority (1000)&#8201;&#8212;&#8201;took the 3g.20gb slot</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-fill-3g-20gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PENDING</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Preempted&#8201;&#8212;&#8201;waiting for 3g.20gb to free up</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-fill-2g-10gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ADMITTED</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unaffected&#8201;&#8212;&#8201;different MIG profile</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mig-fill-1g-5gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ADMITTED</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unaffected&#8201;&#8212;&#8201;different MIG profile</p></td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>Verify only the 3g.20gb slot changed hands:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n training-jobs -o wide</strong>
+NAME                        READY   STATUS    RESTARTS   AGE    IP            NODE                     NOMINATED NODE   READINESS GATES
+mig-fill-1g-5gb-jv48s       1/1     Running   0          3m6s   10.235.0.79   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+mig-fill-2g-10gb-j7rgq      1/1     Running   0          3m7s   10.235.0.78   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+mig-preempt-high-3g-8zjlg   1/1     Running   0          46s    10.235.0.80   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Three pods should be Running (the high-priority <code>3g</code> job plus the two unaffected low-priority jobs on <code>2g</code> and <code>1g</code>).
+The original low-priority <code>3g</code> pod should be terminated or absent.</p>
+</div>
+</li>
+<li>
+<p>Check ClusterQueue usage:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc describe clusterqueue mig-cluster-queue | sed -n '/Flavors Usage:/,/Pending Workloads:/p' | grep -A 1 "nvidia.com/mig"</strong>
+      Name:             nvidia.com/mig-1g.5gb
+      Total:            1
+--
+      Name:             nvidia.com/mig-2g.10gb
+      Total:            1
+--
+      Name:             nvidia.com/mig-3g.20gb
+      Total:            1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All three MIG profiles still show <code>Total: 1</code>&#8201;&#8212;&#8201;the same total capacity is consumed, but the <code>3g.20gb</code> slot is now held by the high-priority job instead of the low-priority one.</p>
+</div>
+</li>
+<li>
+<p>Confirm nvidia-smi from the high-priority job:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc logs -n training-jobs job/mig-preempt-high-3g --tail=20</strong>
++------------------------------------------------------------------------------+
+| NVIDIA-SMI 470.129.06   Driver Version: 470.129.06   CUDA Version: 11.4      |
++--------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                |                      |               MIG M. |
++--------------------------------+----------------------+----------------------+
+|   0  NVIDIA-A10..          Off | 00000001:00:00.0 Off |                  Off |
+| N/A   33C    P8    11W /  70W  |      0MiB / 40960MiB |       0%     Default |
+|                                |                      |                  N/A |
++--------------------------------+----------------------+----------------------+
+
++------------------------------------------------------------------------------+
+| Processes:                                                                   |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory  |
+|        ID   ID                                                   Usage       |
++------------------------------------------------------------------------------+
+|    0   N/A  N/A       289      G   /bin/bash-cecho "========..        0MiB   |
++------------------------------------------------------------------------------+</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The output should show <code>NVIDIA-A100-SXM4-40GB</code>, confirming the pod is on the A100 node using the MIG slice.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Preemption only affected <code>mig-fill-3g-20gb</code>&#8201;&#8212;&#8201;the jobs on <code>2g.10gb</code> and <code>1g.5gb</code> were untouched because there was no contention on those profiles.
+Kueue preempts the minimum number of workloads needed to admit the incoming high-priority job.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Wait for the high-priority job to complete.</p>
+<div class="paragraph">
+<p>After 5 minutes, <code>mig-preempt-high-3g</code> finishes and releases the <code>3g.20gb</code> slot.
+Kueue automatically re-admits <code>mig-fill-3g-20gb</code>:</p>
+</div>
+<div class="paragraph">
+<p>Watch the low-priority job get re-admitted:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get workloads -n training-jobs</strong>
+NAME                            QUEUE                RESERVED IN         ADMITTED   FINISHED   AGE
+job-mig-fill-1g-5gb-b1bc4       mig-training-queue   mig-cluster-queue   True       True       8m51s
+job-mig-fill-2g-10gb-6983f      mig-training-queue   mig-cluster-queue   True       True       8m52s
+<strong>job-mig-fill-3g-20gb-7882b      mig-training-queue   mig-cluster-queue   True                  8m53s</strong>
+job-mig-preempt-high-3g-42a9f   mig-training-queue   mig-cluster-queue   True       True       6m31s</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The low-priority 3g pod should start running again:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc get pods -n training-jobs -o wide</strong>
+NAME                        READY   STATUS      RESTARTS   AGE     IP            NODE                     NOMINATED NODE   READINESS GATES
+mig-fill-1g-5gb-jv48s       0/1     Completed   0          9m24s   10.235.0.79   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+mig-fill-2g-10gb-j7rgq      0/1     Completed   0          9m25s   10.235.0.78   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+mig-fill-3g-20gb-2chwf      1/1     Running     0          85s     10.235.0.81   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;
+mig-preempt-high-3g-8zjlg   0/1     Completed   0          7m4s    10.235.0.80   worker-cluster-vnnbf-1   &lt;none&gt;           &lt;none&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This demonstrates the full lifecycle: preemption &#8594; high-priority execution &#8594; automatic re-admission of the preempted job.</p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_clean_up"><a class="anchor" href="#_clean_up"></a>Clean Up</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-console hljs" data-lang="console">$ <strong>oc delete jobs -n training-jobs mig-fill-3g-20gb mig-fill-2g-10gb mig-fill-1g-5gb mig-preempt-high-3g</strong>
+job.batch "mig-fill-3g-20gb" deleted from training-jobs namespace
+job.batch "mig-fill-2g-10gb" deleted from training-jobs namespace
+job.batch "mig-fill-1g-5gb" deleted from training-jobs namespace
+job.batch "mig-preempt-high-3g" deleted from training-jobs namespace</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_mig_preemption_summary"><a class="anchor" href="#_mig_preemption_summary"></a>MIG Preemption Summary</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 50%;">
+<col style="width: 16.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">File</th>
+<th class="tableblock halign-left valign-top">Resources</th>
+<th class="tableblock halign-left valign-top">Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>job-mig-fill-low.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3 low-priority MIG jobs (one per profile)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>job-mig-preempt-high.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1 high-priority job targeting <code>3g.20gb</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sidebarblock">
+<div class="content">
+<div class="title">MIG Preemption in Production</div>
+<div class="paragraph">
+<p>In a production cluster with multiple MIG-partitioned GPUs, the preemption behavior scales naturally.
+Each MIG profile is a separate Kubernetes extended resource, so Kueue tracks contention per-profile independently.
+A high-priority job requesting <code>mig-3g.20gb</code> only preempts other jobs using <code>mig-3g.20gb</code>&#8201;&#8212;&#8201;jobs on smaller profiles are unaffected.
+This makes MIG especially useful for mixed workloads where different teams need different GPU sizes.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<nav class="pagination">
+  <span class="prev"><a href="mig-workloads.html">MIG Workloads</a></span>
+  <span class="next"><a href="troubleshooting.html">Troubleshooting</a></span>
+</nav>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <img src="../../../_/img/rhl-logo-red.png" height="40px" alt="Red Hat"  href="https://redhat.com" >
+</footer><script id="site-script" src="../../../_/js/site.js" data-ui-root-path="../../../_"></script>
+<script async src="../../../_/js/vendor/highlight.js"></script>
+<script defer src="../../../_/js/vendor/tabs.js"></script>
+<script defer src="../../../_/js/vendor/reading-time.js"></script>
+  </body>
+</html>
