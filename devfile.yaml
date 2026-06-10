@@ -1,6 +1,6 @@
 schemaVersion: 2.2.0
 metadata:
-  name: kueue-quickcourse
+  name: kueue
   version: 1.0.0
   description: GPU Quota Management with Kueue on Red Hat OpenShift AI — course development workspace
 components:
